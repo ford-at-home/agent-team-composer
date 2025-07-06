@@ -1,0 +1,64 @@
+# Source files (we ship compiled JS)
+src/
+*.ts
+!*.d.ts
+
+# Development files
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
+
+# Test files
+**/__tests__/
+**/*.test.ts
+**/*.test.js
+coverage/
+.nyc_output/
+
+# Build files
+tsconfig*.json
+vite.config.ts
+postcss.config.js
+tailwind.config.ts
+eslint.config.js
+vitest.config.ts
+
+# Git and CI
+.git/
+.github/
+.gitignore
+
+# Docs and scripts (except the ones we want)
+scripts/
+!bin/
+catalog/
+demo-output/
+public/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Temporary files
+*.tmp
+.agent-team-composer-data.json
+.agent-team-composer-dev.json
+
+# Node modules (npm handles this but be explicit)
+node_modules/
+
+# Development builds
+dist/**/*.map
