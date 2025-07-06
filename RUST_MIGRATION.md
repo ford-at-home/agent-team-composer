@@ -2,7 +2,7 @@
 
 ### 📅 Objective
 
-Replicate the functionality of an existing TypeScript NPM package in Rust, ensuring API parity, type fidelity, and equivalent test coverage. Optionally expose the Rust crate back to JavaScript consumers via WASM or FFI. This includes all testing and CI checks that are currently configured to run via precommit hook and within GitHub Actions. It includes all dependencies. The migration must preserve 100% of the functionality down to the most minor detail, such that the end user has no idea it took place other than the fact that it's going to be much, much faster.
+Replicate the functionality of an existing TypeScript NPM package in Rust, ensuring API parity, type fidelity, and equivalent test coverage. Optionally expose the Rust crate back to JavaScript consumers via WASM or FFI. This includes a full migration of the testing and CI checks that are currently configured to run via pre-commit hook and within GitHub Actions, such that the depth and breadth of all checks is preserved, if not improved. It includes all dependencies. The migration must preserve 100% of the functionality down to the most minor detail and ergonomics such that the end user has no idea it took place other than the fact that it's going to be much, much faster.
 
 ---
 
