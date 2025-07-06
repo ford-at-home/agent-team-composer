@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Run quick checks before pushing
+echo "🔍 Running pre-push checks..."
+
+# Type checking
+echo "📝 Type checking..."
+npm run typecheck || {
+  echo "❌ Type checking failed. Please fix TypeScript errors before pushing."
+  exit 1
+}
+
+# Build validation (only if dist exists)
+if [ -d "dist" ]; then
+  echo "🏗️ Validating build..."
+  npm run validate:build || {
+    echo "❌ Build validation failed. Run 'npm run build:npm' and fix any issues."
+    exit 1
+  }
+fi
+
+echo "✅ All pre-push checks passed!"

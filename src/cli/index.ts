@@ -10,7 +10,7 @@ import { config } from 'dotenv';
 import { validateEnvironment } from '../services/environment';
 import { parseReadme } from '../services/readme-parser';
 import { generateProjectPlan } from '../services/llm-orchestrator';
-import { startServer } from '../server';
+import { startServer } from '../server/index';
 
 config();
 

@@ -1,0 +1,161 @@
+name: Auto Release on PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  release:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        registry-url: 'https://registry.npmjs.org'
+        cache: 'npm'
+    
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+    
+    - name: Determine version type from labels
+      id: version
+      run: |
+        labels="${{ join(github.event.pull_request.labels.*.name, ',') }}"
+        
+        if [[ "$labels" =~ "breaking-change" ]] || [[ "$labels" =~ "major" ]]; then
+          echo "type=major" >> $GITHUB_OUTPUT
+        elif [[ "$labels" =~ "feature" ]] || [[ "$labels" =~ "minor" ]]; then
+          echo "type=minor" >> $GITHUB_OUTPUT
+        else
+          # Default to patch for bug fixes, docs, deps, etc.
+          echo "type=patch" >> $GITHUB_OUTPUT
+        fi
+        
+        # Check for skip-release label
+        if [[ "$labels" =~ "skip-release" ]]; then
+          echo "skip=true" >> $GITHUB_OUTPUT
+        else
+          echo "skip=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Skip notification
+      if: steps.version.outputs.skip == 'true'
+      run: |
+        echo "⏭️ Skipping release due to 'skip-release' label"
+        exit 0
+    
+    - name: Install dependencies
+      if: steps.version.outputs.skip == 'false'
+      run: npm ci
+    
+    - name: Run tests
+      if: steps.version.outputs.skip == 'false'
+      run: |
+        npm run typecheck
+        npm run test:once
+    
+    - name: Build package
+      if: steps.version.outputs.skip == 'false'
+      run: npm run build:npm
+    
+    - name: Validate build
+      if: steps.version.outputs.skip == 'false'
+      run: |
+        npm run validate:build
+        npm run test:build
+    
+    - name: Increment version
+      if: steps.version.outputs.skip == 'false'
+      run: |
+        npm version ${{ steps.version.outputs.type }} -m "chore: release v%s [skip ci]"
+        echo "NEW_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+    
+    - name: Update CHANGELOG
+      if: steps.version.outputs.skip == 'false'
+      run: |
+        # Add PR title and number to changelog
+        PR_TITLE="${{ github.event.pull_request.title }}"
+        PR_NUMBER="${{ github.event.pull_request.number }}"
+        PR_USER="${{ github.event.pull_request.user.login }}"
+        
+        # Create temporary changelog entry
+        cat > CHANGELOG_ENTRY.md << EOF
+        ## [v${NEW_VERSION}] - $(date +%Y-%m-%d)
+        
+        ### Changed
+        - ${PR_TITLE} (#${PR_NUMBER}) by @${PR_USER}
+        
+        EOF
+        
+        # Prepend to existing changelog
+        if [ -f CHANGELOG.md ]; then
+          cat CHANGELOG.md >> CHANGELOG_ENTRY.md
+          mv CHANGELOG_ENTRY.md CHANGELOG.md
+        fi
+        
+        git add CHANGELOG.md
+        git commit -m "docs: update changelog for v${NEW_VERSION} [skip ci]"
+    
+    - name: Push changes
+      if: steps.version.outputs.skip == 'false'
+      run: |
+        git push origin main
+        git push origin v${{ env.NEW_VERSION }}
+    
+    - name: Publish to NPM
+      if: steps.version.outputs.skip == 'false'
+      run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    
+    - name: Create GitHub Release
+      if: steps.version.outputs.skip == 'false'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ env.NEW_VERSION }}
+        release_name: Release v${{ env.NEW_VERSION }}
+        body: |
+          ## What's Changed
+          
+          - ${{ github.event.pull_request.title }} by @${{ github.event.pull_request.user.login }} in #${{ github.event.pull_request.number }}
+          
+          **Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ env.PREVIOUS_VERSION }}...v${{ env.NEW_VERSION }}
+          
+          ## Installation
+          
+          ```bash
+          npm install -g agent-team-composer@${{ env.NEW_VERSION }}
+          ```
+          
+          Or use directly with npx:
+          ```bash
+          npx agent-team-composer@${{ env.NEW_VERSION }} init
+          ```
+        draft: false
+        prerelease: false
+    
+    - name: Comment on PR
+      if: steps.version.outputs.skip == 'false'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+            body: `🎉 Released as [v${{ env.NEW_VERSION }}](https://www.npmjs.com/package/agent-team-composer/v/${{ env.NEW_VERSION }})!`
+          })
