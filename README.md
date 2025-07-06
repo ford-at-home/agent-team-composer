@@ -113,9 +113,53 @@ export GITHUB_TOKEN=ghp_...
 agent-team-composer init --port 4000
 ```
 
+## 🚀 Release Process
+
+See [docs/RELEASE.md](docs/RELEASE.md) for detailed release instructions.
+
+### Automatic Releases
+
+Every PR merged to main automatically triggers a release! Version is determined by PR labels:
+- `feature` → Minor version bump (new features)
+- `breaking-change` → Major version bump  
+- No label → Patch version bump (bug fixes)
+- `skip-release` → No release
+
+### Manual Releases
+
+1. **Create Release PR**: Actions → "Create Release PR" → Choose version → Run
+2. **Direct Publish**: Actions → "Publish to NPM" → Choose version → Run
+
+### Setup NPM Publishing
+
+To enable automated NPM publishing:
+
+1. Create NPM access token at https://www.npmjs.com/
+2. Add to GitHub: Settings → Secrets → Actions → New repository secret
+   - Name: `NPM_TOKEN`
+   - Value: Your NPM access token
+
 ## 🤝 Contributing
 
-Contributions welcome! Please check out our [contributing guide](https://github.com/ford-at-home/project-delivery-navigator/blob/main/CONTRIBUTING.md).
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
+### Development Setup
+
+```bash
+# Clone and install
+git clone https://github.com/ford-at-home/agent-team-composer
+cd agent-team-composer
+npm install
+
+# Run tests
+npm run test
+npm run build:npm
+npm run test:build
+
+# Test locally
+npm link
+agent-team-composer init
+```
 
 ## 📄 License
 

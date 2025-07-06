@@ -17,14 +17,15 @@ async function fixImports(distDir) {
     if (stat.isFile() && file.endsWith('.js')) {
       let content = await fs.readFile(filePath, 'utf-8');
       
-      // Fix relative imports - check if target exists as file or directory
+      // Fix all relative imports (both ./ and ../)
       content = content.replace(
-        /from\s+['"](\.\.[\/\w.-]+)['"];?/g,
+        /from\s+['"](\.[\/\w.-]+)['"];?/g,
         (match, importPath) => {
-          if (!importPath.endsWith('.js')) {
+          if (!importPath.endsWith('.js') && !importPath.endsWith('.json')) {
             // Resolve the actual path
             const fullPath = path.resolve(path.dirname(filePath), importPath);
             
+            // Check if it's a file
             try {
               const stat = require('fs').statSync(fullPath + '.js');
               if (stat.isFile()) {
@@ -32,10 +33,14 @@ async function fixImports(distDir) {
               }
             } catch {}
             
+            // Check if it's a directory with index.js
             try {
-              const stat = require('fs').statSync(path.join(fullPath, 'index.js'));
-              if (stat.isFile()) {
-                return match.replace(importPath, importPath + '/index.js');
+              const stat = require('fs').statSync(fullPath);
+              if (stat.isDirectory()) {
+                const indexPath = path.join(fullPath, 'index.js');
+                if (require('fs').existsSync(indexPath)) {
+                  return match.replace(importPath, importPath + '/index.js');
+                }
               }
             } catch {}
             
@@ -46,11 +51,11 @@ async function fixImports(distDir) {
         }
       );
       
+      // Fix import statements
       content = content.replace(
-        /import\s+['"](\.\.[\/\w.-]+)['"];?/g,
+        /import\s+.*?from\s+['"](\.[\/\w.-]+)['"];?/g,
         (match, importPath) => {
-          if (!importPath.endsWith('.js')) {
-            // Resolve the actual path
+          if (!importPath.endsWith('.js') && !importPath.endsWith('.json')) {
             const fullPath = path.resolve(path.dirname(filePath), importPath);
             
             try {
@@ -61,13 +66,95 @@ async function fixImports(distDir) {
             } catch {}
             
             try {
-              const stat = require('fs').statSync(path.join(fullPath, 'index.js'));
-              if (stat.isFile()) {
-                return match.replace(importPath, importPath + '/index.js');
+              const stat = require('fs').statSync(fullPath);
+              if (stat.isDirectory()) {
+                const indexPath = path.join(fullPath, 'index.js');
+                if (require('fs').existsSync(indexPath)) {
+                  return match.replace(importPath, importPath + '/index.js');
+                }
               }
             } catch {}
             
-            // Default to .js extension
+            return match.replace(importPath, importPath + '.js');
+          }
+          return match;
+        }
+      );
+      
+      // Fix export statements
+      content = content.replace(
+        /export\s+.*?from\s+['"](\.[\/\w.-]+)['"];?/g,
+        (match, importPath) => {
+          if (!importPath.endsWith('.js') && !importPath.endsWith('.json')) {
+            const fullPath = path.resolve(path.dirname(filePath), importPath);
+            
+            try {
+              const stat = require('fs').statSync(fullPath + '.js');
+              if (stat.isFile()) {
+                return match.replace(importPath, importPath + '.js');
+              }
+            } catch {}
+            
+            try {
+              const stat = require('fs').statSync(fullPath);
+              if (stat.isDirectory()) {
+                const indexPath = path.join(fullPath, 'index.js');
+                if (require('fs').existsSync(indexPath)) {
+                  return match.replace(importPath, importPath + '/index.js');
+                }
+              }
+            } catch {}
+            
+            return match.replace(importPath, importPath + '.js');
+          }
+          return match;
+        }
+      );
+      
+      // Fix dynamic imports
+      content = content.replace(
+        /import\s*\(\s*['"](\.[\/\w.-]+)['"]\s*\)/g,
+        (match, importPath) => {
+          if (!importPath.endsWith('.js') && !importPath.endsWith('.json')) {
+            const fullPath = path.resolve(path.dirname(filePath), importPath);
+            
+            try {
+              const stat = require('fs').statSync(fullPath + '.js');
+              if (stat.isFile()) {
+                return match.replace(importPath, importPath + '.js');
+              }
+            } catch {}
+            
+            try {
+              const stat = require('fs').statSync(fullPath);
+              if (stat.isDirectory()) {
+                const indexPath = path.join(fullPath, 'index.js');
+                if (require('fs').existsSync(indexPath)) {
+                  return match.replace(importPath, importPath + '/index.js');
+                }
+              }
+            } catch {}
+            
+            return match.replace(importPath, importPath + '.js');
+          }
+          return match;
+        }
+      );
+      
+      // Fix side-effect imports
+      content = content.replace(
+        /import\s+['"](\.[\/\w.-]+)['"];?/g,
+        (match, importPath) => {
+          if (!importPath.endsWith('.js') && !importPath.endsWith('.json') && !importPath.endsWith('.css')) {
+            const fullPath = path.resolve(path.dirname(filePath), importPath);
+            
+            try {
+              const stat = require('fs').statSync(fullPath + '.js');
+              if (stat.isFile()) {
+                return match.replace(importPath, importPath + '.js');
+              }
+            } catch {}
+            
             return match.replace(importPath, importPath + '.js');
           }
           return match;
@@ -77,6 +164,46 @@ async function fixImports(distDir) {
       await fs.writeFile(filePath, content);
     }
   }
+}
+
+async function validateBuild(distDir) {
+  console.log('🔍 Validating build output...');
+  const files = await fs.readdir(distDir, { recursive: true });
+  const errors = [];
+  
+  for (const file of files) {
+    if (file.endsWith('.js')) {
+      const filePath = path.join(distDir, file);
+      const content = await fs.readFile(filePath, 'utf-8');
+      
+      // Check for unresolved relative imports
+      const patterns = [
+        /from\s+['"](\.[\/\w.-]+)['"]/g,
+        /export\s+.*from\s+['"](\.[\/\w.-]+)['"]/g,
+        /import\s*\(\s*['"](\.[\/\w.-]+)['"]\s*\)/g
+      ];
+      
+      for (const pattern of patterns) {
+        let match;
+        while ((match = pattern.exec(content)) !== null) {
+          const importPath = match[1];
+          if (!importPath.endsWith('.js') && 
+              !importPath.endsWith('.json') && 
+              !importPath.endsWith('.css')) {
+            errors.push(`Missing .js extension in ${file}: ${match[0]}`);
+          }
+        }
+      }
+    }
+  }
+  
+  if (errors.length > 0) {
+    console.error('❌ Build validation failed:');
+    errors.forEach(err => console.error(`   ${err}`));
+    throw new Error('Import validation failed');
+  }
+  
+  console.log('✅ Build validation passed');
 }
 
 async function buildForNPM() {
@@ -98,6 +225,9 @@ async function buildForNPM() {
     // Fix ES module imports by adding .js extensions
     console.log('🔧 Fixing ES module imports...');
     await fixImports(path.join(rootDir, 'dist'));
+    
+    // Validate the build
+    await validateBuild(path.join(rootDir, 'dist'));
     
     // Copy static files
     console.log('📄 Copying static files...');
@@ -168,6 +298,19 @@ import('../dist/cli/index.js');
     const binPath = path.join(binDir, 'agent-team-composer.js');
     await fs.writeFile(binPath, binContent);
     await fs.chmod(binPath, '755');
+    
+    // Test the CLI actually works
+    console.log('🧪 Testing CLI execution...');
+    try {
+      execSync('node bin/agent-team-composer.js --version', { 
+        stdio: 'pipe', 
+        cwd: rootDir 
+      });
+      console.log('✅ CLI execution test passed');
+    } catch (error) {
+      console.error('❌ CLI execution test failed:', error.message);
+      throw error;
+    }
     
     console.log('\n✅ Build complete! Ready for NPM publish.\n');
     console.log('To test locally:');

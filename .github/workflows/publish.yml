@@ -1,0 +1,138 @@
+name: Publish to NPM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version type (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      dry-run:
+        description: 'Dry run (do not publish)'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+        registry-url: 'https://registry.npmjs.org'
+        cache: 'npm'
+    
+    - name: Configure Git
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run tests
+      run: |
+        npm run typecheck
+        npm run test:once
+    
+    - name: Build package
+      run: npm run build:npm
+    
+    - name: Validate build
+      run: |
+        npm run validate:build
+        npm run test:build
+    
+    - name: Check if PR merge or direct push
+      id: check-pr
+      run: |
+        # Check if this is a PR merge by looking at the commit message
+        if [[ "${{ github.event.head_commit.message }}" =~ "Merge pull request" ]]; then
+          echo "is_pr_merge=true" >> $GITHUB_OUTPUT
+          # Extract PR number and check labels via API if needed
+        else
+          echo "is_pr_merge=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Determine version type
+      id: version-type
+      run: |
+        if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+        else
+          # For automatic releases on merge to main, default to patch
+          # You can enhance this to read from PR labels or commit message
+          echo "version=patch" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Increment version
+      if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+      run: |
+        npm version ${{ steps.version-type.outputs.version }} -m "chore: release v%s [skip ci]"
+        echo "NEW_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+    
+    - name: Verify package
+      run: |
+        npm pack --dry-run
+        echo "Package contents:"
+        npm pack --dry-run --json | jq -r '.files[].path' | sort
+    
+    - name: Publish to NPM (dry run)
+      if: github.event.inputs.dry-run == 'true'
+      run: npm publish --dry-run
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    
+    - name: Publish to NPM
+      if: github.event.inputs.dry-run != 'true'
+      run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    
+    - name: Push version changes
+      if: github.event.inputs.dry-run != 'true'
+      run: |
+        git push origin main
+        git push origin v${{ env.NEW_VERSION }}
+    
+    - name: Create GitHub Release
+      if: github.event.inputs.dry-run != 'true'
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ env.NEW_VERSION }}
+        release_name: Release v${{ env.NEW_VERSION }}
+        body: |
+          ## What's Changed
+          
+          See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+          
+          ## Installation
+          
+          ```bash
+          npm install -g agent-team-composer@${{ env.NEW_VERSION }}
+          ```
+          
+          Or use directly with npx:
+          ```bash
+          npx agent-team-composer@${{ env.NEW_VERSION }} init
+          ```
+        draft: false
+        prerelease: false

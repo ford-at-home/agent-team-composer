@@ -1,6 +1,6 @@
 {
   "name": "agent-team-composer",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Transform README files into GitHub project plans with AI-powered agent teams",
   "type": "module",
   "bin": {
@@ -23,6 +23,8 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "test:once": "vitest run",
+    "test:build": "vitest run test/build.integration.test.js",
+    "validate:build": "node scripts/validate-build.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
@@ -155,12 +157,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ford-at-home/project-delivery-navigator"
+    "url": "https://github.com/ford-at-home/agent-team-composer"
   },
   "bugs": {
-    "url": "https://github.com/ford-at-home/project-delivery-navigator/issues"
+    "url": "https://github.com/ford-at-home/agent-team-composer/issues"
   },
-  "homepage": "https://github.com/ford-at-home/project-delivery-navigator#readme",
+  "homepage": "https://github.com/ford-at-home/agent-team-composer#readme",
   "engines": {
     "node": ">=16.0.0"
   },

@@ -1,64 +1,55 @@
-# Source files (we ship compiled JS)
+# Source files
 src/
-*.ts
-!*.d.ts
+scripts/
+test/
+docs/
+
+# Config files
+.github/
+.vscode/
+.eslintrc*
+.prettierrc*
+vitest.config.*
+vite.config.*
+tsconfig.json
+tsconfig.*.json
+playwright.config.*
 
 # Development files
-.env
-.env.local
-.env.*.local
-*.log
-npm-debug.log*
-
-# Test files
-**/__tests__/
-**/*.test.ts
-**/*.test.js
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+__tests__/
 coverage/
 .nyc_output/
 
-# Build files
-tsconfig*.json
-vite.config.ts
-postcss.config.js
-tailwind.config.ts
-eslint.config.js
-vitest.config.ts
+# Build artifacts we don't want
+*.map
+*.tsbuildinfo
 
-# Git and CI
-.git/
-.github/
-.gitignore
+# Database files
+*.db
+*.sqlite
+prisma/
 
-# Docs and scripts (except the ones we want)
-scripts/
-!bin/
-catalog/
-demo-output/
-public/
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
+# Misc
 .DS_Store
-Thumbs.db
-
-# Docker
-Dockerfile
+.env*
+!.env.example
+.gitignore
+.npmignore
+CONTRIBUTING.md
 docker-compose.yml
+Dockerfile
 .dockerignore
+.agent-team-composer-*.json
 
-# Temporary files
-*.tmp
-.agent-team-composer-data.json
-.agent-team-composer-dev.json
-
-# Node modules (npm handles this but be explicit)
-node_modules/
-
-# Development builds
-dist/**/*.map
+# Keep these
+!dist/
+!bin/
+!README.md
+!LICENSE
+!package.json
+!CHANGELOG.md
+!product-lifecycle-agent-roles.md
