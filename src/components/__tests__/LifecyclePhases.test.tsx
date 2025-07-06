@@ -81,7 +81,10 @@ describe('LifecyclePhases', () => {
     it('should show role and issue counts', () => {
       render(<LifecyclePhases {...defaultProps} />);
       
-      expect(screen.getByText('2 roles')).toBeInTheDocument(); // Phase 1
+      // Use getAllByText for multiple occurrences
+      const roleTexts = screen.getAllByText('2 roles');
+      expect(roleTexts).toHaveLength(2); // Phase 1 and Phase 2 both have 2 roles
+      
       expect(screen.getByText('2 issues')).toBeInTheDocument(); // Phase 1
       expect(screen.getByText('1 issues')).toBeInTheDocument(); // Phase 2
     });
@@ -165,9 +168,11 @@ describe('LifecyclePhases', () => {
         'Content Writer'
       ];
       
-      roles.forEach(role => {
-        expect(screen.getAllByText(role)[0]).toBeInTheDocument();
-      });
+      // Check that each role appears at least once
+      for (const role of roles) {
+        const elements = screen.queryAllByText(role);
+        expect(elements.length).toBeGreaterThan(0);
+      }
     });
 
     it('should show checked roles correctly', () => {
@@ -281,11 +286,17 @@ describe('LifecyclePhases', () => {
     it('should show role badges with correct colors', () => {
       render(<LifecyclePhases {...defaultProps} />);
       
-      const uxBadge = screen.getByText('UX Researcher').closest('.text-xs');
-      expect(uxBadge).toHaveClass('bg-rose-100', 'text-rose-700');
+      // Find all UX Researcher badges and check the first one in the issues section
+      const uxBadges = screen.getAllByText('UX Researcher');
+      const uxBadgeInIssue = uxBadges.find(el => el.closest('.text-xs'));
+      expect(uxBadgeInIssue).toBeTruthy();
+      expect(uxBadgeInIssue?.closest('.text-xs')).toHaveClass('bg-rose-100', 'text-rose-700');
       
-      const poBadge = screen.getByText('Product Owner').closest('.text-xs');
-      expect(poBadge).toHaveClass('bg-purple-100', 'text-purple-700');
+      // Find all Product Owner badges and check the first one in the issues section
+      const poBadges = screen.getAllByText('Product Owner');
+      const poBadgeInIssue = poBadges.find(el => el.closest('.text-xs'));
+      expect(poBadgeInIssue).toBeTruthy();
+      expect(poBadgeInIssue?.closest('.text-xs')).toHaveClass('bg-purple-100', 'text-purple-700');
     });
 
     it('should handle scrollable issue list', () => {

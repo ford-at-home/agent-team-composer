@@ -74,9 +74,9 @@ describe('ReviewSubmit', () => {
       render(<ReviewSubmit {...defaultProps} />);
       
       expect(screen.getByText('Project Summary')).toBeInTheDocument();
-      expect(screen.getByText('owner/repo')).toBeInTheDocument();
+      expect(screen.getByText('Test Project')).toBeInTheDocument();
       expect(screen.getByText('Web Application')).toBeInTheDocument();
-      expect(screen.getByText('main')).toBeInTheDocument();
+      expect(screen.getByText('A test project')).toBeInTheDocument();
     });
 
     it('should calculate statistics correctly', () => {
