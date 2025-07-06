@@ -1,0 +1,81 @@
+name: Validate GitHub Workflows
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+jobs:
+  validate-workflows:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate workflow files
+        run: |
+          # Install actionlint for workflow validation
+          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/install-actionlint.bash)
+
+          # Validate all workflow files
+          echo "🔍 Validating GitHub Actions workflow files..."
+
+          # Run actionlint on all workflow files
+          ./actionlint -color
+
+          echo "✅ All workflow files are valid!"
+
+      - name: Check for common workflow issues
+        run: |
+          echo "🔍 Checking for common workflow issues..."
+
+          # Check for undefined environment variables
+          for file in .github/workflows/*.yml; do
+            echo "Checking $file..."
+            
+            # Check for undefined env variables (basic check)
+            if grep -E '\$\{\{[[:space:]]*env\.[A-Z_]+[[:space:]]*\}\}' "$file" | grep -v 'GITHUB_\|PATH\|HOME'; then
+              # Extract env var references
+              vars=$(grep -oE 'env\.[A-Z_]+' "$file" | sort | uniq)
+              
+              for var in $vars; do
+                var_name=${var#env.}
+                # Check if the variable is defined in the same workflow
+                if ! grep -q "${var_name}=" "$file" && ! grep -q "echo \"${var_name}=" "$file"; then
+                  echo "⚠️  Warning: $var_name might be undefined in $file"
+                fi
+              done
+            fi
+            
+            # Check for missing checkout before git operations
+            if grep -q "git push\|git tag\|git commit" "$file"; then
+              if ! grep -B20 "git push\|git tag\|git commit" "$file" | grep -q "actions/checkout"; then
+                echo "⚠️  Warning: Git operations found without checkout action in $file"
+              fi
+            fi
+          done
+
+          echo "✅ Workflow validation complete!"
+
+      - name: Test workflow syntax with dry run
+        run: |
+          echo "🔍 Testing workflow syntax..."
+
+          # For each workflow, check if it can be parsed
+          for file in .github/workflows/*.yml; do
+            echo "Testing $file..."
+            # Use yq to validate YAML syntax
+            if ! docker run --rm -v "${PWD}":/workdir mikefarah/yq eval '.' "/workdir/$file" > /dev/null 2>&1; then
+              echo "❌ YAML syntax error in $file"
+              exit 1
+            fi
+          done
+
+          echo "✅ All workflows have valid YAML syntax!"
