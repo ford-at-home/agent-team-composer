@@ -19,12 +19,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install actionlint
+        run: |
+          # Download actionlint binary directly
+          VERSION="1.6.27"
+          curl -L "https://github.com/rhysd/actionlint/releases/download/v${VERSION}/actionlint_${VERSION}_linux_amd64.tar.gz" | tar xz
+          chmod +x actionlint
+
       - name: Validate workflow files
         run: |
-          # Install actionlint for workflow validation
-          bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/install-actionlint.bash)
-
-          # Validate all workflow files
           echo "🔍 Validating GitHub Actions workflow files..."
 
           # Run actionlint on all workflow files
