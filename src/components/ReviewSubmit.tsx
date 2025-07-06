@@ -33,7 +33,7 @@ interface ReviewSubmitProps {
   };
   phases: Phase[];
   onPrevious: () => void;
-  onSubmit?: (phases: Phase[]) => Promise<any>;
+  onSubmit?: (phases: Phase[]) => Promise<unknown>;
 }
 
 const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitProps) => {
@@ -43,7 +43,7 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
   const [selectedBranch, setSelectedBranch] = useState(summary.branch || 'main');
   const [newBranchName, setNewBranchName] = useState('');
   const [createNewBranch, setCreateNewBranch] = useState(false);
-  const [repositories, setRepositories] = useState<Array<{ full_name: string; permissions: any }>>([]);
+  const [repositories, setRepositories] = useState<Array<{ full_name: string; permissions: { push?: boolean; admin?: boolean } }>>([]);
   const [branches, setBranches] = useState<string[]>(['main']);
   const [loadingRepos, setLoadingRepos] = useState(false);
   const [loadingBranches, setLoadingBranches] = useState(false);
@@ -78,8 +78,9 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
       }
       
       const data = await response.json();
-      setRepositories(data.filter((repo: any) => 
-        repo.permissions.push || repo.permissions.admin
+      const repoList = Array.isArray(data) ? data : [];
+      setRepositories(repoList.filter((repo: { permissions?: { push?: boolean; admin?: boolean } }) => 
+        repo.permissions && (repo.permissions.push || repo.permissions.admin)
       ));
     } catch (error) {
       setRepoError('Failed to load repositories. Please check your GitHub authentication.');
@@ -102,7 +103,7 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
       }
       
       const data = await response.json();
-      setBranches(data);
+      setBranches(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Error fetching branches:', error);
       setBranches(['main']); // Fallback to main
@@ -129,12 +130,7 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
     
     try {
       if (onSubmit) {
-        await onSubmit({
-          ...phases,
-          repository: targetRepo,
-          branch: targetBranch,
-          createNewBranch
-        } as any);
+        await onSubmit(phases);
       }
       
       setSubmitted(true);
@@ -243,7 +239,7 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
                 <SelectValue placeholder={loadingRepos ? "Loading repositories..." : "Select repository"} />
               </SelectTrigger>
               <SelectContent>
-                {repositories.map(repo => (
+                {Array.isArray(repositories) && repositories.map(repo => (
                   <SelectItem key={repo.full_name} value={repo.full_name}>
                     {repo.full_name}
                   </SelectItem>
@@ -284,7 +280,7 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
                     <SelectValue placeholder={loadingBranches ? "Loading branches..." : "Select branch"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {branches.map(branch => (
+                    {Array.isArray(branches) && branches.map(branch => (
                       <SelectItem key={branch} value={branch}>
                         {branch}
                       </SelectItem>
