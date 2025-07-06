@@ -39,6 +39,10 @@ if (typeof window !== 'undefined') {
   Object.defineProperty(window.Element.prototype, 'releasePointerCapture', {
     value: vi.fn(),
   });
+
+  // Mock scrollIntoView for Radix UI Select
+  window.Element.prototype.scrollIntoView = vi.fn();
+  window.HTMLElement.prototype.scrollIntoView = vi.fn();
 }
 
 // Increase default test timeout
