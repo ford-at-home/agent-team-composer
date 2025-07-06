@@ -30,7 +30,8 @@
     "test:e2e:headed": "playwright test --headed",
     "docker:build": "docker build -t agent-team-composer .",
     "docker:run": "docker-compose up",
-    "docker:dev": "docker-compose --profile development up"
+    "docker:dev": "docker-compose --profile development up",
+    "prepare": "husky"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.20.0",
@@ -125,8 +126,11 @@
     "eslint-plugin-react-hooks": "^5.1.0-rc.0",
     "eslint-plugin-react-refresh": "^0.4.9",
     "globals": "^15.9.0",
+    "husky": "^9.1.7",
     "jsdom": "^26.1.0",
+    "lint-staged": "^15.5.2",
     "postcss": "^8.4.47",
+    "prettier": "^3.6.2",
     "supertest": "^7.1.1",
     "tailwindcss": "^3.4.11",
     "typescript": "^5.5.3",
@@ -164,9 +168,25 @@
   },
   "homepage": "https://github.com/ford-at-home/agent-team-composer#readme",
   "engines": {
-    "node": ">=16.0.0"
+    "node": ">=18.0.0"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write --ignore-unknown"
+    ],
+    "package.json": [
+      "npm run validate:build --if-present"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
   }
 }

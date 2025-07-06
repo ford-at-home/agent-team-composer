@@ -6,9 +6,27 @@
 2. Install dependencies: `npm install`
 3. Run the development server: `npm run dev`
 
+## Pre-commit Hooks
+
+This project uses Husky and lint-staged to run checks before commits and pushes:
+
+### Pre-commit
+
+- Runs ESLint on staged JavaScript/TypeScript files
+- Runs Prettier on staged JSON/YAML/Markdown files
+- Validates build if package.json is changed
+
+### Pre-push
+
+- Runs TypeScript type checking
+- Validates build output (if dist/ exists)
+
+To bypass hooks in emergency: `git commit --no-verify`
+
 ## Build System
 
 This project uses an ESM (ECMAScript Modules) build system. Please read [docs/BUILD-SYSTEM.md](docs/BUILD-SYSTEM.md) for detailed information about:
+
 - How the build process works
 - Common issues and solutions
 - Best practices for imports
@@ -38,11 +56,13 @@ npm run test:once
 ### Imports
 
 **Do:**
+
 - Use relative imports for internal modules: `import { foo } from './foo'`
 - Omit `.js` extensions in TypeScript source files
 - Use destructuring when importing multiple exports
 
 **Don't:**
+
 - Use path aliases (`@/*`) in distributable code
 - Add `.js` extensions in TypeScript files
 - Use absolute imports for internal modules
@@ -57,18 +77,22 @@ npm run test:once
 ## Testing
 
 ### Unit Tests
+
 ```bash
 npm run test        # Watch mode
 npm run test:once   # Single run
 ```
 
 ### Build Integration Tests
+
 ```bash
 npm run test:build  # Test the built package
 ```
 
 ### Manual Testing
+
 After making changes to the CLI:
+
 ```bash
 npm run build:npm
 npx . init --dry-run
@@ -89,6 +113,7 @@ npx . init --dry-run
 ### "Cannot find module" Errors
 
 This usually means the build script didn't properly add `.js` extensions. Check:
+
 1. Your imports use relative paths (not aliases)
 2. The build script regex patterns match your import style
 3. Run `npm run validate:build` to check imports
