@@ -1,3 +1,9 @@
+## [v0.1.14] - 2025-07-07
+
+### Changed
+
+- Fix NPM publish error when version already exists (#42) by @ford-at-home
+
 ## [v0.1.13] - 2025-07-07
 
 ### Changed
