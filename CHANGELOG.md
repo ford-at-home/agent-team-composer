@@ -1,3 +1,9 @@
+## [v0.1.6] - 2025-07-07
+
+### Changed
+
+- Skip flaky tests to fix CI failures (#34) by @ford-at-home
+
 ## [v0.1.5] - 2025-07-07
 
 ### Changed
