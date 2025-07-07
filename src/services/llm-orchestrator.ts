@@ -87,14 +87,27 @@ export class LLMOrchestrator {
     const content = response.content[0].type === 'text' ? response.content[0].text : '';
     
     // Extract and validate JSON from response
-    const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
-    if (!jsonMatch) {
-      console.error('LLM Response:', content);
-      throw new Error('Failed to extract JSON from LLM response');
+    let jsonStr = '';
+    const jsonMatch = content.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
+    
+    if (jsonMatch) {
+      jsonStr = jsonMatch[1].trim();
+    } else {
+      // Try to find JSON without code block markers
+      const jsonStart = content.indexOf('{');
+      const jsonEnd = content.lastIndexOf('}');
+      
+      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+        jsonStr = content.substring(jsonStart, jsonEnd + 1);
+      } else {
+        console.error('Failed to extract JSON from LLM response');
+        console.error('LLM Response:', content);
+        throw new Error('Failed to extract JSON from LLM response. Response did not contain valid JSON.');
+      }
     }
 
     try {
-      const parsed = JSON.parse(jsonMatch[1]);
+      const parsed = JSON.parse(jsonStr);
       
       // Validate response structure
       const PhaseGenerationSchema = z.object({
@@ -147,12 +160,36 @@ export class LLMOrchestrator {
         });
 
         const content = response.content[0].type === 'text' ? response.content[0].text : '';
-        const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
-        if (!jsonMatch) {
-          throw new Error(`Failed to extract JSON for phase ${phase.title}`);
+        
+        // Try to extract JSON with code block markers first
+        let jsonStr = '';
+        const jsonMatch = content.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
+        
+        if (jsonMatch) {
+          jsonStr = jsonMatch[1].trim();
+        } else {
+          // Try to find JSON without code block markers
+          const jsonStart = content.indexOf('{');
+          const jsonEnd = content.lastIndexOf('}');
+          
+          if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+            jsonStr = content.substring(jsonStart, jsonEnd + 1);
+          } else {
+            console.error('Failed to extract JSON from LLM response for phase:', phase.title);
+            console.error('LLM Response:', content);
+            throw new Error(`Failed to extract JSON for phase ${phase.title}. Response did not contain valid JSON.`);
+          }
         }
 
-        const epicGeneration: LLMEpicGeneration = JSON.parse(jsonMatch[1]);
+        let epicGeneration: LLMEpicGeneration;
+        try {
+          epicGeneration = JSON.parse(jsonStr);
+        } catch (parseError) {
+          console.error('Failed to parse JSON for phase:', phase.title);
+          console.error('JSON string:', jsonStr);
+          console.error('Parse error:', parseError);
+          throw new Error(`Failed to parse JSON for phase ${phase.title}. Invalid JSON format.`);
+        }
 
         return {
           id: phase.id,
@@ -196,8 +233,24 @@ export class LLMOrchestrator {
             });
 
             const content = response.content[0].type === 'text' ? response.content[0].text : '';
-            const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
-            if (!jsonMatch) {
+            
+            // Try to extract JSON
+            let jsonStr = '';
+            const jsonMatch = content.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
+            
+            if (jsonMatch) {
+              jsonStr = jsonMatch[1].trim();
+            } else {
+              // Try to find JSON without code block markers
+              const jsonStart = content.indexOf('{');
+              const jsonEnd = content.lastIndexOf('}');
+              
+              if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+                jsonStr = content.substring(jsonStart, jsonEnd + 1);
+              }
+            }
+
+            if (!jsonStr) {
               // Fallback to simple format
               return {
                 title: task.title,
@@ -206,12 +259,23 @@ export class LLMOrchestrator {
               };
             }
 
-            const formatted = JSON.parse(jsonMatch[1]);
-            return {
-              title: formatted.title || task.title,
-              description: formatted.body || task.description,
-              role: task.suggestedRole
-            };
+            try {
+              const formatted = JSON.parse(jsonStr);
+              return {
+                title: formatted.title || task.title,
+                description: formatted.body || task.description,
+                role: task.suggestedRole
+              };
+            } catch (parseError) {
+              console.error('Failed to parse issue format JSON:', parseError);
+              console.error('JSON string:', jsonStr);
+              // Fallback to simple format
+              return {
+                title: task.title,
+                description: task.description,
+                role: task.suggestedRole
+              };
+            }
           })
         );
 
