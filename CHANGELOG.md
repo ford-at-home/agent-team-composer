@@ -1,3 +1,9 @@
+## [v1.0.1] - 2025-07-07
+
+### Changed
+
+- Release v1.0.0 - First Stable Release 🎉 (#44) by @ford-at-home
+
 ## [v1.0.0] - 2025-07-07
 
 ### Major Release 🎉
