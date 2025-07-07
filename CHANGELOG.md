@@ -1,3 +1,9 @@
+## [v0.1.5] - 2025-07-07
+
+### Changed
+
+- Fix recurring test failures in ReviewSubmit component (#33) by @ford-at-home
+
 ## [v0.1.4] - 2025-07-07
 
 ### Changed
