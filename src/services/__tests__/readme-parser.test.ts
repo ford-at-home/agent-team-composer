@@ -430,7 +430,9 @@ describe('parseReadme', () => {
 
     // In CI environment, it might get the actual repository
     expect(result.repository).toMatch(/^(unknown\/unknown|ford-at-home\/agent-team-composer|ford-at-home\/project-delivery-navigator|owner\/repo)$/);
-    expect(result.branch).toMatch(/^(main|master|fix\/readme-parser-tests)$/);
+    // Branch can be any valid git branch name or HEAD in CI
+    expect(result.branch).toBeTruthy();
+    expect(typeof result.branch).toBe('string');
   });
 
   it('should include all parsed fields', async () => {
@@ -455,7 +457,7 @@ A test project description.
       title: 'Test Project',
       description: 'A test project description.',
       repository: expect.stringMatching(/^(test\/repo|ford-at-home\/agent-team-composer|ford-at-home\/project-delivery-navigator|unknown\/unknown)$/),
-      branch: expect.stringMatching(/^(main|master|fix\/test-failures|fix\/readme-parser-tests)$/),
+      branch: expect.any(String),
       features: ['Feature 1', 'Feature 2'],
       techStack: expect.arrayContaining(['React', 'Node.js']),
       complexity: expect.stringMatching(/simple|moderate|complex/),
