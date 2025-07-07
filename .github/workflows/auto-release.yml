@@ -1,5 +1,7 @@
 name: Auto Release on PR Merge
 
+# This workflow handles AUTOMATIC releases when PRs are merged
+# For manual releases, use the "Publish to NPM" workflow
 on:
   pull_request:
     types: [closed]
