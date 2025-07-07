@@ -1,3 +1,9 @@
+## [v0.1.7] - 2025-07-07
+
+### Changed
+
+- fix: remove brittle readme-parser tests (#36) by @ford-at-home
+
 ## [v0.1.6] - 2025-07-07
 
 ### Changed
