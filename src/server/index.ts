@@ -230,24 +230,44 @@ export async function startServer(port: number, tempDataPath: string): Promise<s
     throw new Error('Agent Composer UI files not found. Please reinstall the package.');
   }
   
-  return new Promise((resolve) => {
-    const server = app.listen(port, () => {
-      const url = `http://localhost:${port}`;
-      console.log(`Server running at ${url}`);
-      resolve(url);
-    });
+  return new Promise((resolve, reject) => {
+    let currentPort = port;
+    let retries = 0;
+    const maxRetries = 10;
     
-    // Graceful shutdown
-    process.on('SIGINT', () => {
-      console.log('\nShutting down server...');
-      server.close();
+    const tryListen = () => {
+      const server = app.listen(currentPort, () => {
+        const url = `http://localhost:${currentPort}`;
+        console.log(`Server running at ${url}`);
+        resolve(url);
+        
+        // Graceful shutdown
+        process.on('SIGINT', () => {
+          console.log('\nShutting down server...');
+          server.close();
+          
+          // Clean up temp file
+          if (dataFilePath) {
+            fs.unlink(dataFilePath).catch(() => {});
+          }
+          
+          process.exit(0);
+        });
+      });
       
-      // Clean up temp file
-      if (dataFilePath) {
-        fs.unlink(dataFilePath).catch(() => {});
-      }
-      
-      process.exit(0);
-    });
+      server.on('error', (err: NodeJS.ErrnoException) => {
+        if (err.code === 'EADDRINUSE' && retries < maxRetries) {
+          retries++;
+          currentPort++;
+          console.log(`Port ${currentPort - 1} is in use, trying port ${currentPort}...`);
+          server.close();
+          tryListen();
+        } else {
+          reject(err);
+        }
+      });
+    };
+    
+    tryListen();
   });
 }

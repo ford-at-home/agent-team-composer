@@ -6,6 +6,7 @@ import { ISSUE_FORMATTER_PROMPT } from '../prompts/issue-formatter';
 import { PromptSanitizer } from './prompt-sanitizer';
 import { z } from 'zod';
 import { BulletproofJSONExtractor, RobustLLMHandler } from './json-extractor';
+import { ProgressCache } from './progress-cache';
 
 export class LLMOrchestrator {
   private anthropic: Anthropic;
@@ -25,19 +26,74 @@ export class LLMOrchestrator {
       complexity: string;
       targetUsers?: string[];
     },
-    readmeContent: string
+    readmeContent: string,
+    forceFresh?: boolean
   ): Promise<ProjectData> {
-    // Step 1: Generate phases based on README
-    console.log('🤖 Generating project phases...');
-    const phases = await this.generatePhases(projectInfo, readmeContent);
+    // Initialize progress cache
+    const cache = new ProgressCache(projectInfo.title);
     
-    // Step 2: For each phase, generate epics/tasks with role assignments
-    console.log('👥 Generating epics and assigning roles...');
-    const phasesWithTasks = await this.generateEpicsForPhases(phases, projectInfo);
+    // Clear cache if fresh generation is requested
+    if (forceFresh) {
+      console.log('🔄 Fresh generation requested, clearing cache...');
+      await cache.clear();
+    }
+    
+    const cachedProgress = await cache.load();
+    
+    let phases: LLMPhaseGeneration['phases'];
+    let phasesWithTasks: Array<Phase & { tasks: LLMEpicGeneration['tasks'] }>;
+    
+    // Check if we can resume from cache
+    if (cachedProgress && 
+        cachedProgress.projectInfo?.title === projectInfo.title &&
+        cachedProgress.readmeContent === readmeContent) {
+      console.log('📂 Found cached progress, resuming...');
+      
+      if (cachedProgress.finalPhases) {
+        console.log('✅ Using fully processed data from cache');
+        return {
+          summary: {
+            title: projectInfo.title,
+            description: projectInfo.description,
+            domain: projectInfo.domain,
+            repository: '',  // These will be filled by UI
+            branch: ''
+          },
+          phases: cachedProgress.finalPhases
+        };
+      }
+      
+      phases = cachedProgress.phases || [];
+      phasesWithTasks = cachedProgress.phasesWithTasks || [];
+    } else {
+      // Clear old cache if project info doesn't match
+      await cache.clear();
+      phases = [];
+      phasesWithTasks = [];
+    }
+    
+    // Step 1: Generate phases based on README (if not cached)
+    if (phases.length === 0) {
+      console.log('🤖 Generating project phases...');
+      phases = await this.generatePhases(projectInfo, readmeContent);
+      await cache.save({ projectInfo, readmeContent, phases });
+    } else {
+      console.log('✅ Using cached phases');
+    }
+    
+    // Step 2: For each phase, generate epics/tasks with role assignments (if not cached)
+    if (phasesWithTasks.length === 0) {
+      console.log('👥 Generating epics and assigning roles...');
+      phasesWithTasks = await this.generateEpicsForPhases(phases, projectInfo);
+      await cache.save({ phasesWithTasks });
+    } else {
+      console.log('✅ Using cached phases with tasks');
+    }
     
     // Step 3: Format issues for GitHub
     console.log('📝 Formatting issues for GitHub...');
-    const finalPhases = await this.formatIssuesForGitHub(phasesWithTasks, projectInfo);
+    const formattedPhases = await this.formatIssuesForGitHub(phasesWithTasks, projectInfo);
+    await cache.save({ finalPhases: formattedPhases });
 
     return {
       summary: {
@@ -47,7 +103,7 @@ export class LLMOrchestrator {
         repository: 'unknown/unknown', // Will be set by CLI
         branch: 'main'
       },
-      phases: finalPhases
+      phases: formattedPhases
     };
   }
 
@@ -310,8 +366,9 @@ export async function generateProjectPlan(
     complexity: string;
     targetUsers?: string[];
   },
-  readmeContent: string
+  readmeContent: string,
+  forceFresh?: boolean
 ): Promise<ProjectData> {
   const orchestrator = new LLMOrchestrator();
-  return orchestrator.generateProjectPlan(projectInfo, readmeContent);
+  return orchestrator.generateProjectPlan(projectInfo, readmeContent, forceFresh);
 }

@@ -27,6 +27,7 @@ program
   .option('-p, --port <port>', 'Port for localhost UI', '3000')
   .option('-r, --readme <path>', 'Path to README.md file', 'README.md')
   .option('--skip-gh-check', 'Skip GitHub CLI verification')
+  .option('--fresh', 'Force fresh generation, ignoring any cached progress')
   .action(async (options) => {
     const spinner = ora();
     
@@ -73,7 +74,7 @@ program
         
         // Step 3: Generate project plan using LLM cascade
         spinner.start('Generating project plan with Claude...');
-        const projectData = await generateProjectPlan(projectInfo, readmeContent);
+        const projectData = await generateProjectPlan(projectInfo, readmeContent, options.fresh);
         spinner.succeed('Project plan generated');
         
         console.log(chalk.green(`\nGenerated ${projectData.phases.length} phases with ${projectData.phases.reduce((acc, p) => acc + p.issues.length, 0)} total tasks`));
