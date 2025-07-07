@@ -184,7 +184,7 @@ jobs:
             ```
           draft: false
           prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_PAT }}
 
       - name: Comment on PR
         if: steps.version.outputs.skip == 'false'
