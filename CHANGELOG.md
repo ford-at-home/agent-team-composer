@@ -1,3 +1,9 @@
+## [v1.0.2] - 2025-07-07
+
+### Changed
+
+- Test release process - Update Node.js requirement (#45) by @ford-at-home
+
 ## [v1.0.1] - 2025-07-07
 
 ### Changed
