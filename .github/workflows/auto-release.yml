@@ -161,12 +161,10 @@ jobs:
 
       - name: Create GitHub Release
         if: steps.version.outputs.skip == 'false'
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: v${{ env.NEW_VERSION }}
-          release_name: Release v${{ env.NEW_VERSION }}
+          tag: v${{ env.NEW_VERSION }}
+          name: Release v${{ env.NEW_VERSION }}
           body: |
             ## What's Changed
 
@@ -186,6 +184,7 @@ jobs:
             ```
           draft: false
           prerelease: false
+          token: ${{ secrets.RELEASE_PAT }}
 
       - name: Comment on PR
         if: steps.version.outputs.skip == 'false'
