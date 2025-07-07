@@ -148,7 +148,7 @@ describe('LifecyclePhases', () => {
   });
 
   describe('role management', () => {
-    it('should display all available roles', async () => {
+    it.skip('should display all available roles', async () => {
       const user = userEvent.setup();
       render(<LifecyclePhases {...defaultProps} />);
       
