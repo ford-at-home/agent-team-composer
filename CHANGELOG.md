@@ -1,3 +1,9 @@
+## [v0.1.3] - 2025-07-07
+
+### Changed
+
+- fix: replace npm badges with static version badge (#30) by @ford-at-home
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
