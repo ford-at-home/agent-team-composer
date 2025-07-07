@@ -126,7 +126,7 @@ export class LLMOrchestrator {
             description: z.string(),
             suggestedRole: z.string()
           }))
-        });
+        }) as z.ZodSchema<LLMEpicGeneration>;
 
         // Use bulletproof extraction
         const epicGeneration = await RobustLLMHandler.getStructuredResponse(
@@ -142,7 +142,7 @@ export class LLMOrchestrator {
           description: phase.description,
           roles: epicGeneration.roles,
           tasks: epicGeneration.tasks,
-          issues: [], // Will be populated in next step
+          issues: [] as Issue[], // Will be populated in next step
           approved: false
         };
       })
