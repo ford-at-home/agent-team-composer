@@ -90,10 +90,25 @@ jobs:
         run: |
           echo "PREVIOUS_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
-      - name: Increment version
+      - name: Check and increment version
         if: steps.version.outputs.skip == 'false'
         run: |
-          npm version ${{ steps.version.outputs.type }} -m "chore: release v%s [skip ci]"
+          # Get current version and check if we need to bump
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+
+          # Check if this version tag already exists
+          if git ls-remote --tags origin | grep -q "refs/tags/v${CURRENT_VERSION}"; then
+            echo "Version v${CURRENT_VERSION} already released, checking if we need a new version"
+            # Pull latest to ensure we have all recent changes
+            git pull origin main
+            # Now bump the version
+            npm version ${{ steps.version.outputs.type }} -m "chore: release v%s [skip ci]"
+          else
+            echo "Version v${CURRENT_VERSION} not yet released, bumping version"
+            npm version ${{ steps.version.outputs.type }} -m "chore: release v%s [skip ci]"
+          fi
+
           echo "NEW_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
       - name: Update CHANGELOG
@@ -135,8 +150,8 @@ jobs:
           git pull --rebase origin main
           # Push the commits
           git push origin main
-          # Push the tag created by npm version
-          git push origin --tags
+          # Push the tag created by npm version (don't fail if tag exists)
+          git push origin --tags || echo "Some tags already exist, continuing..."
 
       - name: Publish to NPM
         if: steps.version.outputs.skip == 'false'

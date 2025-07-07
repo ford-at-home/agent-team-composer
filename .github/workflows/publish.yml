@@ -82,10 +82,25 @@ jobs:
             echo "version=patch" >> $GITHUB_OUTPUT
           fi
 
-      - name: Increment version
+      - name: Check and increment version
         if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
         run: |
-          npm version ${{ steps.version-type.outputs.version }} -m "chore: release v%s [skip ci]"
+          # Get current version and check if we need to bump
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+
+          # Check if this version tag already exists
+          if git ls-remote --tags origin | grep -q "refs/tags/v${CURRENT_VERSION}"; then
+            echo "Version v${CURRENT_VERSION} already released, checking if we need a new version"
+            # Pull latest to ensure we have all recent changes
+            git pull origin main
+            # Now bump the version
+            npm version ${{ steps.version-type.outputs.version }} -m "chore: release v%s [skip ci]"
+          else
+            echo "Version v${CURRENT_VERSION} not yet released, bumping version"
+            npm version ${{ steps.version-type.outputs.version }} -m "chore: release v%s [skip ci]"
+          fi
+
           echo "NEW_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
 
       - name: Verify package
@@ -112,7 +127,8 @@ jobs:
           # Pull latest changes before pushing to handle concurrent workflows
           git pull --rebase origin main
           git push origin main
-          git push origin v${{ env.NEW_VERSION }}
+          # Try to push the tag, but don't fail if it already exists
+          git push origin v${{ env.NEW_VERSION }} || echo "Tag v${{ env.NEW_VERSION }} already exists, skipping tag push"
 
       - name: Create GitHub Release
         if: github.event.inputs.dry-run != 'true'
