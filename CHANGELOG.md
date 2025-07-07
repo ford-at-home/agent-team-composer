@@ -1,3 +1,9 @@
+## [v0.1.13] - 2025-07-07
+
+### Changed
+
+- Fix GitHub Release permissions in workflows (#41) by @ford-at-home
+
 ## [v0.1.12] - 2025-07-07
 
 ### Changed
