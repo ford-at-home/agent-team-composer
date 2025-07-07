@@ -153,8 +153,23 @@ jobs:
           # Push the tag created by npm version (don't fail if tag exists)
           git push origin --tags || echo "Some tags already exist, continuing..."
 
-      - name: Publish to NPM
+      - name: Check if version is already published
         if: steps.version.outputs.skip == 'false'
+        id: check-npm
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          NPM_VERSION=$(npm view agent-team-composer@$PACKAGE_VERSION version 2>/dev/null || echo "")
+
+          if [ "$NPM_VERSION" = "$PACKAGE_VERSION" ]; then
+            echo "Version $PACKAGE_VERSION is already published to NPM"
+            echo "already_published=true" >> $GITHUB_OUTPUT
+          else
+            echo "Version $PACKAGE_VERSION is not yet published"
+            echo "already_published=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Publish to NPM
+        if: steps.version.outputs.skip == 'false' && steps.check-npm.outputs.already_published != 'true'
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -163,6 +178,8 @@ jobs:
         if: steps.version.outputs.skip == 'false'
         uses: ncipollo/release-action@v1
         with:
+          allowUpdates: true
+          skipIfReleaseExists: true
           tag: v${{ env.NEW_VERSION }}
           name: Release v${{ env.NEW_VERSION }}
           body: |
