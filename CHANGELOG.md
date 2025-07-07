@@ -1,3 +1,40 @@
+## [v1.0.0] - 2025-07-07
+
+### Major Release 🎉
+
+This is the first stable release of Agent Team Composer! After extensive testing and improvements, the tool is ready for production use.
+
+### Added
+
+- **Bulletproof JSON extraction** system with 6 fallback methods for handling malformed LLM responses
+- **Telemetry and monitoring** to track extraction success rates and common errors
+- **Circuit breaker and rate limiting** for production resilience
+- **Health check endpoints** (`/api/health`, `/api/telemetry`) for monitoring system status
+- **Idempotent workflows** that can be safely re-run after failures
+- **Comprehensive error handling** throughout the LLM orchestration pipeline
+
+### Fixed
+
+- JSON extraction errors when LLM responses lack proper formatting
+- NPM publish failures due to version conflicts
+- GitHub release creation permission errors
+- Concurrent workflow execution issues
+- Test suite reliability problems
+
+### Changed
+
+- Workflows now create GitHub releases only after NPM publish succeeds
+- Improved error messages and logging for better debugging
+- Enhanced TypeScript type safety across services
+- Updated to use modern GitHub Actions (ncipollo/release-action)
+
+### Infrastructure
+
+- Added resilience patterns (circuit breaker, rate limiting)
+- Implemented comprehensive telemetry system
+- Enhanced CI/CD pipeline reliability
+- Improved workflow idempotency
+
 ## [v0.1.14] - 2025-07-07
 
 ### Changed
