@@ -101,10 +101,10 @@ jobs:
             # Pull latest to ensure we have all recent changes
             git pull origin main
             # Now bump the version
-            npm version ${{ steps.version-type.outputs.version }} -m "chore: release v%s [skip ci]"
+            npm version ${{ steps.version-type.outputs.version }} --no-git-tag-version
           else
             echo "Version v${CURRENT_VERSION} not yet released, bumping version"
-            npm version ${{ steps.version-type.outputs.version }} -m "chore: release v%s [skip ci]"
+            npm version ${{ steps.version-type.outputs.version }} --no-git-tag-version
           fi
 
           echo "NEW_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
@@ -121,35 +121,26 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Check if version is already published
-        if: github.event.inputs.dry-run != 'true'
-        id: check-npm
-        run: |
-          PACKAGE_VERSION=$(node -p "require('./package.json').version")
-          NPM_VERSION=$(npm view agent-team-composer@$PACKAGE_VERSION version 2>/dev/null || echo "")
-
-          if [ "$NPM_VERSION" = "$PACKAGE_VERSION" ]; then
-            echo "Version $PACKAGE_VERSION is already published to NPM"
-            echo "already_published=true" >> $GITHUB_OUTPUT
-          else
-            echo "Version $PACKAGE_VERSION is not yet published"
-            echo "already_published=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Publish to NPM
-        if: github.event.inputs.dry-run != 'true' && steps.check-npm.outputs.already_published != 'true'
+        if: github.event.inputs.dry-run != 'true'
         run: npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Push version changes
+      - name: Commit and push version changes
         if: github.event.inputs.dry-run != 'true'
         run: |
+          # Only push changes if NPM publish succeeded
+          git add package.json package-lock.json
+          git commit -m "chore: release v${{ env.NEW_VERSION }} [skip ci]"
+
+          # Create and push tag
+          git tag v${{ env.NEW_VERSION }}
+
           # Pull latest changes before pushing to handle concurrent workflows
           git pull --rebase origin main
           git push origin main
-          # Try to push the tag, but don't fail if it already exists
-          git push origin v${{ env.NEW_VERSION }} || echo "Tag v${{ env.NEW_VERSION }} already exists, skipping tag push"
+          git push origin v${{ env.NEW_VERSION }}
 
       - name: Create GitHub Release
         if: github.event.inputs.dry-run != 'true'
