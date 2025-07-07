@@ -1,3 +1,9 @@
+## [v0.1.10] - 2025-07-07
+
+### Changed
+
+- Fix concurrent workflow push conflicts (#38) by @ford-at-home
+
 ## [v0.1.9] - 2025-07-07
 
 ### Changed
