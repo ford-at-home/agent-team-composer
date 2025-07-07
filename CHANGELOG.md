@@ -1,3 +1,9 @@
+## [v0.1.11] - 2025-07-07
+
+### Changed
+
+- Handle existing version tags in release workflows (#39) by @ford-at-home
+
 ## [v0.1.10] - 2025-07-07
 
 ### Changed
