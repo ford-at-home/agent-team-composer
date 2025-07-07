@@ -1,3 +1,9 @@
+## [v0.1.4] - 2025-07-07
+
+### Changed
+
+- Fix/readme parser tests (#32) by @ford-at-home
+
 ## [v0.1.3] - 2025-07-07
 
 ### Changed
