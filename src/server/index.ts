@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 import { ProjectData } from '../types';
 import { GitHubService } from '../services/github-service';
 import { z } from 'zod';
@@ -200,36 +201,33 @@ export async function startServer(port: number, tempDataPath: string): Promise<s
   const dataContent = await fs.readFile(tempDataPath, 'utf8');
   projectData = JSON.parse(dataContent);
   
-  // In development, use Vite dev server
-  if (process.env.NODE_ENV !== 'production') {
-    try {
-      // Dynamically import vite only in development
-      const { createServer } = await import('vite');
-      
-      // Create Vite server
-      const vite = await createServer({
-        root: process.cwd(),
-        server: {
-          middlewareMode: true,
-          cors: true
-        }
-      });
-      
-      // Use vite's connect instance as middleware
-      app.use(vite.middlewares);
-    } catch (error) {
-      console.warn('Vite not available, serving static files only');
-      // Fallback to static file serving
-      app.use(express.static(path.join(process.cwd(), 'dist')));
-    }
-  } else {
-    // In production, serve built files
-    app.use(express.static(path.join(process.cwd(), 'dist')));
+  // Determine the package root directory (where the dist files are located)
+  // When running from npm/npx, __dirname will be inside the installed package
+  const currentFileUrl = import.meta.url;
+  const currentFilePath = fileURLToPath(currentFileUrl);
+  const currentDir = path.dirname(currentFilePath);
+  
+  // Navigate up from dist/server to the package root
+  const packageRoot = path.resolve(currentDir, '..', '..');
+  const distPath = path.join(packageRoot, 'dist');
+  
+  // Always serve the built files from the package, not from cwd
+  // This ensures we serve Agent Composer UI, not the user's local files
+  try {
+    // Check if dist directory exists in the package
+    await fs.access(distPath);
+    
+    // Serve static files from the package's dist directory
+    app.use(express.static(distPath));
     
     // Fallback to index.html for client-side routing
     app.get('*', (req, res) => {
-      res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
+      res.sendFile(path.join(distPath, 'index.html'));
     });
+  } catch (error) {
+    console.error('Could not find built files in package directory:', distPath);
+    console.error('This may indicate the package was not built properly.');
+    throw new Error('Agent Composer UI files not found. Please reinstall the package.');
   }
   
   return new Promise((resolve) => {
