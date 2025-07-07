@@ -1,3 +1,9 @@
+## [v1.0.4] - 2025-07-07
+
+### Changed
+
+- fix(server): serve Agent Composer UI from package directory, not cwd (#47) by @ford-at-home
+
 ## [v1.0.3] - 2025-07-07
 
 ### Changed
