@@ -1,3 +1,9 @@
+## [v1.0.3] - 2025-07-07
+
+### Changed
+
+- Fix duplicate publish workflows causing version conflicts (#46) by @ford-at-home
+
 ## [v1.0.2] - 2025-07-07
 
 ### Changed
