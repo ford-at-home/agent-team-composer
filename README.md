@@ -25,7 +25,7 @@ That's it! The tool will:
 
 ## 📋 Prerequisites
 
-- Node.js 16+
+- Node.js 18+ (required for ES modules support)
 - GitHub repository with a README.md
 - Anthropic API key
 - GitHub CLI (optional, for enhanced features)
