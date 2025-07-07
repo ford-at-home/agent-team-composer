@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ReviewSubmit from '../ReviewSubmit';
+
+// Create a stable mock for toast
+const toastMock = vi.fn();
 
 // Mock the toast hook
 vi.mock('@/hooks/use-toast', () => ({
   useToast: () => ({
-    toast: vi.fn()
+    toast: toastMock
   })
 }));
 
@@ -66,6 +69,7 @@ describe('ReviewSubmit', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    toastMock.mockClear();
     mockOnSubmit.mockResolvedValue({ success: true });
   });
 
@@ -82,9 +86,10 @@ describe('ReviewSubmit', () => {
     it('should calculate statistics correctly', () => {
       render(<ReviewSubmit {...defaultProps} />);
       
-      // 2 approved phases
-      expect(screen.getByText('Approved Phases')).toBeInTheDocument();
-      expect(screen.getByText('2')).toBeInTheDocument();
+      // 2 approved phases - check in the statistics card specifically
+      const statisticsCard = screen.getByText('Statistics').closest('.rounded-lg');
+      expect(statisticsCard).toHaveTextContent('Approved Phases');
+      expect(statisticsCard).toHaveTextContent('2');
       
       // 3 total issues (2 + 1)
       expect(screen.getByText('Total Issues')).toBeInTheDocument();
@@ -148,10 +153,12 @@ describe('ReviewSubmit', () => {
   describe('submission flow', () => {
     it('should handle successful submission', async () => {
       const user = userEvent.setup();
-      const { useToast } = await import('@/hooks/use-toast');
-      const toastMock = vi.mocked(useToast().toast);
       
-      render(<ReviewSubmit {...defaultProps} />);
+      const { container } = render(<ReviewSubmit {...defaultProps} />);
+      
+      // Check if we're in the form state
+      expect(screen.queryByText('Successfully Deployed!')).not.toBeInTheDocument();
+      expect(screen.getByText('Review & Submit')).toBeInTheDocument();
       
       const submitButton = screen.getByRole('button', { name: /Push to GitHub/i });
       await user.click(submitButton);
@@ -163,7 +170,7 @@ describe('ReviewSubmit', () => {
       await waitFor(() => {
         expect(toastMock).toHaveBeenCalledWith({
           title: 'Successfully pushed to GitHub!',
-          description: 'Created 2 epics and 3 issues.'
+          description: 'Created 2 epics and 3 issues in owner/repo.'
         });
       });
     });
@@ -186,9 +193,6 @@ describe('ReviewSubmit', () => {
       const user = userEvent.setup();
       const error = new Error('API error');
       mockOnSubmit.mockRejectedValueOnce(error);
-      
-      const { useToast } = await import('@/hooks/use-toast');
-      const toastMock = vi.mocked(useToast().toast);
       
       render(<ReviewSubmit {...defaultProps} />);
       
@@ -371,9 +375,6 @@ describe('ReviewSubmit', () => {
     it('should handle non-Error exceptions in submission', async () => {
       const user = userEvent.setup();
       mockOnSubmit.mockRejectedValueOnce('String error');
-      
-      const { useToast } = await import('@/hooks/use-toast');
-      const toastMock = vi.mocked(useToast().toast);
       
       render(<ReviewSubmit {...defaultProps} />);
       

@@ -451,7 +451,7 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
           ) : (
             <>
               <Github className="w-4 h-4 mr-2" />
-              Push to {selectedRepo ? selectedRepo.split('/')[1] : 'GitHub'}
+              Push to GitHub
             </>
           )}
         </Button>
