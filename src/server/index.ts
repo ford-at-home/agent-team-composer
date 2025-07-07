@@ -2,7 +2,6 @@ import express from 'express';
 import cors from 'cors';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { createServer } from 'vite';
 import { ProjectData } from '../types';
 import { GitHubService } from '../services/github-service';
 import { z } from 'zod';
@@ -183,17 +182,26 @@ export async function startServer(port: number, tempDataPath: string): Promise<s
   
   // In development, use Vite dev server
   if (process.env.NODE_ENV !== 'production') {
-    // Create Vite server
-    const vite = await createServer({
-      root: process.cwd(),
-      server: {
-        middlewareMode: true,
-        cors: true
-      }
-    });
-    
-    // Use vite's connect instance as middleware
-    app.use(vite.middlewares);
+    try {
+      // Dynamically import vite only in development
+      const { createServer } = await import('vite');
+      
+      // Create Vite server
+      const vite = await createServer({
+        root: process.cwd(),
+        server: {
+          middlewareMode: true,
+          cors: true
+        }
+      });
+      
+      // Use vite's connect instance as middleware
+      app.use(vite.middlewares);
+    } catch (error) {
+      console.warn('Vite not available, serving static files only');
+      // Fallback to static file serving
+      app.use(express.static(path.join(process.cwd(), 'dist')));
+    }
   } else {
     // In production, serve built files
     app.use(express.static(path.join(process.cwd(), 'dist')));
