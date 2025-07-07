@@ -2,9 +2,7 @@
 
 <div align="center">
 
-[![npm](https://img.shields.io/badge/npm-v1.0.0-blue)](https://www.npmjs.com/package/agent-team-composer)
-[![CI Status](https://img.shields.io/github/actions/workflow/status/ford-at-home/agent-team-composer/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/ford-at-home/agent-team-composer/actions/workflows/ci.yml)
-[![Build Status](https://img.shields.io/github/actions/workflow/status/ford-at-home/agent-team-composer/build-validation.yml?branch=main&label=Build&style=flat-square)](https://github.com/ford-at-home/agent-team-composer/actions/workflows/build-validation.yml)
+![NPM Version](https://img.shields.io/npm/v/agent-team-composer.svg)
 
 Transform any README.md into a comprehensive GitHub project plan with AI-powered agent teams optimized for Claude Flow SPARC methodology.
 
