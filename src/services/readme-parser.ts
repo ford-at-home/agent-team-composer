@@ -55,10 +55,10 @@ export class ReadmeParser {
   private extractFeatures(content: string): string[] {
     const features: string[] = [];
     const featurePatterns = [
-      /## Features?\n((?:[-*] .+?\n)+)/i,
-      /## What (does|can) .+?\n((?:[-*] .+?\n)+)/i,
-      /## Functionality\n((?:[-*] .+?\n)+)/i,
-      /## Key Features?\n((?:[-*] .+?\n)+)/i
+      /## Features?\n((?:[-*] .+?(?:\n|$))+)/i,
+      /## What (does|can) .+?\n((?:[-*] .+?(?:\n|$))+)/i,
+      /## Functionality\n((?:[-*] .+?(?:\n|$))+)/i,
+      /## Key Features?\n((?:[-*] .+?(?:\n|$))+)/i
     ];
 
     for (const pattern of featurePatterns) {
@@ -78,9 +78,9 @@ export class ReadmeParser {
   private extractTechStack(content: string): string[] {
     const techStack: string[] = [];
     const techPatterns = [
-      /## Tech(?:nology)? Stack\n((?:[-*] .+?\n)+)/i,
-      /## Built With\n((?:[-*] .+?\n)+)/i,
-      /## Technologies\n((?:[-*] .+?\n)+)/i
+      /## Tech(?:nology)? Stack\n((?:[-*] .+?(?:\n|$))+)/i,
+      /## Built With\n((?:[-*] .+?(?:\n|$))+)/i,
+      /## Technologies\n((?:[-*] .+?(?:\n|$))+)/i
     ];
 
     for (const pattern of techPatterns) {
@@ -243,11 +243,12 @@ export async function parseReadme(content: string): Promise<ProjectSummary & {
   let branch = 'main';
   
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { execSync } = require('child_process');
     const remoteUrl = execSync('git config --get remote.origin.url', { encoding: 'utf8' }).trim();
     
     // Extract owner/repo from various Git URL formats
-    const match = remoteUrl.match(/(?:git@|https:\/\/)(?:github\.com)[\/:](.+?)(?:\.git)?$/);
+    const match = remoteUrl.match(/(?:git@|https:\/\/)(?:github\.com)[/:](.+?)(?:\.git)?$/);
     if (match) {
       repository = match[1];
     }
