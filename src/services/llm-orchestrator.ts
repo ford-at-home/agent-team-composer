@@ -155,10 +155,22 @@ export class LLMOrchestrator {
     phasesWithTasks: Array<Phase & { tasks: LLMEpicGeneration['tasks'] }>,
     projectInfo: { title: string; }
   ): Promise<Phase[]> {
-    const results = await Promise.all(
-      phasesWithTasks.map(async (phase) => {
-        const issues = await Promise.all(
-          phase.tasks.map(async (task) => {
+    // Process phases sequentially to avoid rate limiting
+    const formattedPhases: Phase[] = [];
+    
+    for (const phase of phasesWithTasks) {
+      // Process issues in batches to control concurrency
+      const BATCH_SIZE = 3; // Process 3 issues at a time
+      const issues: Issue[] = [];
+      
+      console.log(`Processing ${phase.tasks.length} tasks for phase: ${phase.title}`);
+      
+      for (let i = 0; i < phase.tasks.length; i += BATCH_SIZE) {
+        const batch = phase.tasks.slice(i, i + BATCH_SIZE);
+        
+        // Process batch in parallel
+        const batchResults = await Promise.all(
+          batch.map(async (task) => {
             const prompt = PromptSanitizer.buildSafePrompt(ISSUE_FORMATTER_PROMPT, {
               taskTitle: task.title,
               taskDescription: task.description,
@@ -198,19 +210,33 @@ export class LLMOrchestrator {
             }
           })
         );
+        
+        issues.push(...batchResults);
+        
+        // Add a small delay between batches to respect rate limits
+        if (i + BATCH_SIZE < phase.tasks.length) {
+          console.log(`Processed batch ${Math.floor(i / BATCH_SIZE) + 1}, waiting before next batch...`);
+          await new Promise(resolve => setTimeout(resolve, 1000)); // 1 second delay between batches
+        }
+      }
 
-        return {
-          id: phase.id,
-          title: phase.title,
-          description: phase.description,
-          roles: phase.roles,
-          issues,
-          approved: true // Default to approved for now
-        };
-      })
-    );
-
-    return results;
+      formattedPhases.push({
+        id: phase.id,
+        title: phase.title,
+        description: phase.description,
+        roles: phase.roles,
+        issues,
+        approved: true // Default to approved for now
+      });
+      
+      // Add delay between phases as well
+      if (formattedPhases.length < phasesWithTasks.length) {
+        console.log(`Completed phase ${phase.title}, waiting before next phase...`);
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 seconds between phases
+      }
+    }
+    
+    return formattedPhases;
   }
 
   private getCommonRolesForPhase(phaseTitle: string): string[] {
