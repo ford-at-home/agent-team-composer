@@ -6,6 +6,8 @@ import { ProjectData } from '../types';
 import { GitHubService } from '../services/github-service';
 import { z } from 'zod';
 import { errorHandler, asyncHandler } from '../utils/error-handler';
+import { TelemetryService } from '../services/telemetry';
+import { ResilienceManager } from '../services/resilience';
 
 const app = express();
 // Configure CORS for production
@@ -21,10 +23,28 @@ app.use(express.json());
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
+  const telemetry = TelemetryService.getInstance();
+  const resilience = ResilienceManager.getInstance();
+  
   res.json({ 
     status: 'healthy',
     timestamp: new Date().toISOString(),
-    version: process.env.npm_package_version || '1.0.0'
+    version: process.env.npm_package_version || '1.0.0',
+    metrics: {
+      extractionSuccessRate: telemetry.getExtractionSuccessRate(),
+      methodSuccessRates: telemetry.getMethodSuccessRates(),
+      resilience: resilience.getStatus()
+    }
+  });
+});
+
+// Telemetry endpoint for monitoring
+app.get('/api/telemetry', (req, res) => {
+  const telemetry = TelemetryService.getInstance();
+  
+  res.json({
+    report: JSON.parse(telemetry.generateDailyReport()),
+    commonErrors: telemetry.getMostCommonErrors()
   });
 });
 

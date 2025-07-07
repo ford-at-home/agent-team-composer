@@ -5,6 +5,7 @@ import { EPIC_GENERATOR_PROMPT } from '../prompts/epic-generator';
 import { ISSUE_FORMATTER_PROMPT } from '../prompts/issue-formatter';
 import { PromptSanitizer } from './prompt-sanitizer';
 import { z } from 'zod';
+import { BulletproofJSONExtractor, RobustLLMHandler } from './json-extractor';
 
 export class LLMOrchestrator {
   private anthropic: Anthropic;
@@ -73,64 +74,31 @@ export class LLMOrchestrator {
       readmeContent: sanitizedReadme
     });
 
-    const response = await this.anthropic.messages.create({
-      model: this.model,
-      max_tokens: 4000,
-      temperature: 0.7,
-      system: 'You are a helpful assistant that generates project plans. Always respond with valid JSON in the specified format.',
-      messages: [{
-        role: 'user',
-        content: prompt
-      }]
+    // Define schema for validation
+    const PhaseGenerationSchema = z.object({
+      phases: z.array(z.object({
+        id: z.string(),
+        title: z.string(),
+        description: z.string(),
+        suggestedRoles: z.array(z.string())
+      }))
     });
 
-    const content = response.content[0].type === 'text' ? response.content[0].text : '';
-    
-    // Extract and validate JSON from response
-    let jsonStr = '';
-    const jsonMatch = content.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
-    
-    if (jsonMatch) {
-      jsonStr = jsonMatch[1].trim();
-    } else {
-      // Try to find JSON without code block markers
-      const jsonStart = content.indexOf('{');
-      const jsonEnd = content.lastIndexOf('}');
-      
-      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-        jsonStr = content.substring(jsonStart, jsonEnd + 1);
-      } else {
-        console.error('Failed to extract JSON from LLM response');
-        console.error('LLM Response:', content);
-        throw new Error('Failed to extract JSON from LLM response. Response did not contain valid JSON.');
-      }
-    }
+    // Use bulletproof extraction
+    const result = await RobustLLMHandler.getStructuredResponse(
+      this.anthropic,
+      prompt,
+      PhaseGenerationSchema,
+      'phase-generation'
+    );
 
-    try {
-      const parsed = JSON.parse(jsonStr);
-      
-      // Validate response structure
-      const PhaseGenerationSchema = z.object({
-        phases: z.array(z.object({
-          id: z.string(),
-          title: z.string(),
-          description: z.string(),
-          suggestedRoles: z.array(z.string())
-        }))
-      });
-      
-      const result = PhaseGenerationSchema.parse(parsed);
-      // Ensure all fields are non-optional
-      return result.phases.map(phase => ({
-        id: phase.id,
-        title: phase.title,
-        description: phase.description,
-        suggestedRoles: phase.suggestedRoles
-      }));
-    } catch (error) {
-      console.error('Failed to parse LLM response:', error);
-      throw new Error('Invalid response format from LLM');
-    }
+    // Ensure all fields are non-optional
+    return result.phases.map(phase => ({
+      id: phase.id,
+      title: phase.title,
+      description: phase.description,
+      suggestedRoles: phase.suggestedRoles
+    }));
   }
 
   private async generateEpicsForPhases(
@@ -149,47 +117,24 @@ export class LLMOrchestrator {
           phaseId: phase.id
         });
 
-        const response = await this.anthropic.messages.create({
-          model: this.model,
-          max_tokens: 4000,
-          temperature: 0.7,
-          messages: [{
-            role: 'user',
-            content: prompt
-          }]
+        // Define schema for epic generation
+        const EpicGenerationSchema = z.object({
+          phaseId: z.string(),
+          roles: z.array(z.string()),
+          tasks: z.array(z.object({
+            title: z.string(),
+            description: z.string(),
+            suggestedRole: z.string()
+          }))
         });
 
-        const content = response.content[0].type === 'text' ? response.content[0].text : '';
-        
-        // Try to extract JSON with code block markers first
-        let jsonStr = '';
-        const jsonMatch = content.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
-        
-        if (jsonMatch) {
-          jsonStr = jsonMatch[1].trim();
-        } else {
-          // Try to find JSON without code block markers
-          const jsonStart = content.indexOf('{');
-          const jsonEnd = content.lastIndexOf('}');
-          
-          if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-            jsonStr = content.substring(jsonStart, jsonEnd + 1);
-          } else {
-            console.error('Failed to extract JSON from LLM response for phase:', phase.title);
-            console.error('LLM Response:', content);
-            throw new Error(`Failed to extract JSON for phase ${phase.title}. Response did not contain valid JSON.`);
-          }
-        }
-
-        let epicGeneration: LLMEpicGeneration;
-        try {
-          epicGeneration = JSON.parse(jsonStr);
-        } catch (parseError) {
-          console.error('Failed to parse JSON for phase:', phase.title);
-          console.error('JSON string:', jsonStr);
-          console.error('Parse error:', parseError);
-          throw new Error(`Failed to parse JSON for phase ${phase.title}. Invalid JSON format.`);
-        }
+        // Use bulletproof extraction
+        const epicGeneration = await RobustLLMHandler.getStructuredResponse(
+          this.anthropic,
+          prompt,
+          EpicGenerationSchema,
+          `epic-generation-${phase.id}`
+        );
 
         return {
           id: phase.id,
@@ -222,54 +167,29 @@ export class LLMOrchestrator {
               productContext: projectInfo.title
             });
 
-            const response = await this.anthropic.messages.create({
-              model: this.model,
-              max_tokens: 2000,
-              temperature: 0.5,
-              messages: [{
-                role: 'user',
-                content: prompt
-              }]
+            // Define schema for issue formatting
+            const IssueFormatSchema = z.object({
+              title: z.string(),
+              body: z.string()
             });
 
-            const content = response.content[0].type === 'text' ? response.content[0].text : '';
-            
-            // Try to extract JSON
-            let jsonStr = '';
-            const jsonMatch = content.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
-            
-            if (jsonMatch) {
-              jsonStr = jsonMatch[1].trim();
-            } else {
-              // Try to find JSON without code block markers
-              const jsonStart = content.indexOf('{');
-              const jsonEnd = content.lastIndexOf('}');
-              
-              if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-                jsonStr = content.substring(jsonStart, jsonEnd + 1);
-              }
-            }
-
-            if (!jsonStr) {
-              // Fallback to simple format
-              return {
-                title: task.title,
-                description: task.description,
-                role: task.suggestedRole
-              };
-            }
-
             try {
-              const formatted = JSON.parse(jsonStr);
+              // Use bulletproof extraction with optional schema
+              const formatted = await RobustLLMHandler.getStructuredResponse(
+                this.anthropic,
+                prompt,
+                IssueFormatSchema,
+                `issue-format-${phase.id}-${task.title.substring(0, 20)}`
+              );
+
               return {
-                title: formatted.title || task.title,
-                description: formatted.body || task.description,
+                title: formatted.title,
+                description: formatted.body,
                 role: task.suggestedRole
               };
-            } catch (parseError) {
-              console.error('Failed to parse issue format JSON:', parseError);
-              console.error('JSON string:', jsonStr);
-              // Fallback to simple format
+            } catch (error) {
+              // Fallback to simple format if extraction fails
+              console.warn('Failed to format issue, using fallback:', error);
               return {
                 title: task.title,
                 description: task.description,
