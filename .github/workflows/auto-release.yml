@@ -131,6 +131,8 @@ jobs:
       - name: Push changes and tags
         if: steps.version.outputs.skip == 'false'
         run: |
+          # Pull latest changes before pushing to handle concurrent workflows
+          git pull --rebase origin main
           # Push the commits
           git push origin main
           # Push the tag created by npm version

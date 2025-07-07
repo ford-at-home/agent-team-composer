@@ -109,6 +109,8 @@ jobs:
       - name: Push version changes
         if: github.event.inputs.dry-run != 'true'
         run: |
+          # Pull latest changes before pushing to handle concurrent workflows
+          git pull --rebase origin main
           git push origin main
           git push origin v${{ env.NEW_VERSION }}
 
