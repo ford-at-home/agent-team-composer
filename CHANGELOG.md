@@ -1,3 +1,9 @@
+## [v0.1.12] - 2025-07-07
+
+### Changed
+
+- Fix JSON extraction errors in LLM orchestrator (#40) by @ford-at-home
+
 ## [v0.1.11] - 2025-07-07
 
 ### Changed
