@@ -102,11 +102,11 @@ jobs:
             echo "Version v${CURRENT_VERSION} already released, checking if we need a new version"
             # Pull latest to ensure we have all recent changes
             git pull origin main
-            # Now bump the version
-            npm version ${{ steps.version.outputs.type }} -m "chore: release v%s [skip ci]"
+            # Now bump the version without creating git tag yet
+            npm version ${{ steps.version.outputs.type }} --no-git-tag-version
           else
             echo "Version v${CURRENT_VERSION} not yet released, bumping version"
-            npm version ${{ steps.version.outputs.type }} -m "chore: release v%s [skip ci]"
+            npm version ${{ steps.version.outputs.type }} --no-git-tag-version
           fi
 
           echo "NEW_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
@@ -141,17 +141,8 @@ jobs:
           mv CHANGELOG_ENTRY.md CHANGELOG.md
 
           git add CHANGELOG.md
-          git commit -m "docs: update changelog for v${NEW_VERSION} [skip ci]"
-
-      - name: Push changes and tags
-        if: steps.version.outputs.skip == 'false'
-        run: |
-          # Pull latest changes before pushing to handle concurrent workflows
-          git pull --rebase origin main
-          # Push the commits
-          git push origin main
-          # Push the tag created by npm version (don't fail if tag exists)
-          git push origin --tags || echo "Some tags already exist, continuing..."
+          # Stage version changes but don't commit yet
+          git add package.json package-lock.json
 
       - name: Publish to NPM
         if: steps.version.outputs.skip == 'false'
@@ -159,10 +150,28 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      - name: Commit and push changes after NPM success
+        if: steps.version.outputs.skip == 'false'
+        run: |
+          # Commit all staged changes
+          git commit -m "chore: release v${NEW_VERSION} [skip ci]"
+
+          # Create tag
+          git tag v${NEW_VERSION}
+
+          # Pull latest changes before pushing to handle concurrent workflows
+          git pull --rebase origin main
+
+          # Push commits and tag
+          git push origin main
+          git push origin v${NEW_VERSION}
+
       - name: Create GitHub Release
         if: steps.version.outputs.skip == 'false'
         uses: ncipollo/release-action@v1
         with:
+          allowUpdates: true
+          skipIfReleaseExists: true
           tag: v${{ env.NEW_VERSION }}
           name: Release v${{ env.NEW_VERSION }}
           body: |
