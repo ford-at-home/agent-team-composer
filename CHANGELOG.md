@@ -1,3 +1,9 @@
+## [v1.0.5] - 2025-07-07
+
+### Changed
+
+- feat: add port conflict handling and progress caching (#48) by @ford-at-home
+
 ## [v1.0.4] - 2025-07-07
 
 ### Changed

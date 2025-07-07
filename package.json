@@ -1,6 +1,6 @@
 {
   "name": "agent-team-composer",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Transform README files into GitHub project plans with AI-powered agent teams",
   "type": "module",
   "bin": {
