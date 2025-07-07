@@ -1,3 +1,9 @@
+## [v0.1.9] - 2025-07-07
+
+### Changed
+
+- Fix GitHub Actions authentication with RELEASE_PAT (#37) by @ford-at-home
+
 ## [v0.1.8] - 2025-07-07
 
 ### Changed
