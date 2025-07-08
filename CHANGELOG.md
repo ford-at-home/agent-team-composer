@@ -1,3 +1,9 @@
+## [v1.0.6] - 2025-07-08
+
+### Changed
+
+- feat: AI-powered intelligent form field population (#51) by @ford-at-home
+
 ## [v1.0.5] - 2025-07-07
 
 ### Changed
