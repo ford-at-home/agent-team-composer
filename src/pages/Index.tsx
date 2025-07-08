@@ -11,6 +11,7 @@ import EpicIssueView from '@/components/EpicIssueView';
 import ReviewSubmit from '@/components/ReviewSubmit';
 import { useProjectData } from '@/hooks/useProjectData';
 import { ProjectSummary as ProjectSummaryType, Phase } from '@/types';
+import { parseReadme } from '@/services/readme-parser';
 
 const Index = () => {
   const { projectData, loading, error, updateProjectData, createGitHubIssues } = useProjectData();
@@ -18,26 +19,22 @@ const Index = () => {
   const [projectSummary, setProjectSummary] = useState<ProjectSummaryType | null>(null);
   const [phases, setPhases] = useState<Phase[]>([]);
   const [readmeContent, setReadmeContent] = useState<string>('');
-  const [parsedMetadata, setParsedMetadata] = useState<any>(null);
+  const [parsedMetadata, setParsedMetadata] = useState<{
+    title: string;
+    description: string;
+    domain: string;
+    targetUsers: string[];
+    techStack: string[];
+    features: string[];
+    complexity: 'simple' | 'moderate' | 'complex';
+  } | null>(null);
 
   useEffect(() => {
     if (projectData) {
       setProjectSummary(projectData.summary);
       setPhases(projectData.phases);
-      // Extract metadata for ParseProduct step
-      if (projectData.summary) {
-        setParsedMetadata({
-          title: projectData.summary.title,
-          description: projectData.summary.description,
-          domain: projectData.summary.domain,
-          targetUsers: ['developers'], // TODO: Get from projectData
-          techStack: [], // TODO: Get from projectData
-          features: [], // TODO: Get from projectData
-          complexity: 'moderate'
-        });
-      }
     }
-    // TODO: Load README content
+    // Load README content
     fetchReadmeContent();
   }, [projectData]);
 
@@ -47,9 +44,31 @@ const Index = () => {
       if (response.ok) {
         const content = await response.text();
         setReadmeContent(content);
+        
+        // Parse README to get initial metadata
+        const parsed = await parseReadme(content);
+        setParsedMetadata({
+          title: parsed.title,
+          description: parsed.description,
+          domain: parsed.domain,
+          targetUsers: parsed.userTypes || [],
+          techStack: parsed.techStack || [],
+          features: parsed.features || [],
+          complexity: parsed.complexity || 'moderate'
+        });
       }
     } catch (error) {
       console.error('Failed to load README:', error);
+      // Set some defaults if parsing fails
+      setParsedMetadata({
+        title: 'Untitled Project',
+        description: '',
+        domain: 'general',
+        targetUsers: [],
+        techStack: [],
+        features: [],
+        complexity: 'moderate'
+      });
     }
   };
 

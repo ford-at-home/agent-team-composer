@@ -6,12 +6,14 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowRight, FileText, Plus, X, Code, Eye } from 'lucide-react';
+import { ArrowRight, FileText, Plus, X, Code, Eye, Sparkles, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import ReactMarkdown from 'react-markdown';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { populateFormWithAI } from '@/services/ai-form-populator';
+import { useToast } from '@/components/ui/use-toast';
 
 // Form validation schema
 const productSchema = z.object({
@@ -37,6 +39,8 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
   const [newTech, setNewTech] = useState('');
   const [newFeature, setNewFeature] = useState('');
   const [previewMode, setPreviewMode] = useState<'raw' | 'preview'>('preview');
+  const [isLoadingAI, setIsLoadingAI] = useState(false);
+  const { toast } = useToast();
 
   const {
     register,
@@ -59,6 +63,56 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
   });
 
   const watchedValues = watch();
+
+  // Auto-populate with AI when component mounts and README is available
+  useEffect(() => {
+    if (readmeContent && !initialData?.targetUsers?.length) {
+      handleAIPopulate();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readmeContent]); // handleAIPopulate is stable, initialData check is intentional
+
+  const handleAIPopulate = async () => {
+    if (!readmeContent) {
+      toast({
+        title: "No README content",
+        description: "Please provide README content to use AI suggestions.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoadingAI(true);
+    try {
+      const suggestions = await populateFormWithAI(readmeContent, {
+        title: getValues('title'),
+        description: getValues('description'),
+        features: getValues('features'),
+        techStack: getValues('techStack')
+      });
+
+      // Update form with AI suggestions
+      setValue('targetUsers', suggestions.targetUsers);
+      setValue('techStack', suggestions.techStack);
+      setValue('features', suggestions.features);
+      setValue('domain', suggestions.domain);
+      setValue('complexity', suggestions.complexity);
+
+      toast({
+        title: "AI suggestions applied",
+        description: "Form fields have been populated with intelligent suggestions."
+      });
+    } catch (error) {
+      console.error('AI population failed:', error);
+      toast({
+        title: "AI suggestion failed",
+        description: "Could not generate suggestions. Please fill manually.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoadingAI(false);
+    }
+  };
 
   // Domain options
   const domainOptions = [
@@ -102,13 +156,37 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
       {/* Header */}
       <Card className="border-0 shadow-lg">
         <CardHeader className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-          <CardTitle className="text-xl flex items-center">
-            <FileText className="w-5 h-5 mr-2" />
-            Parse Product
-          </CardTitle>
-          <CardDescription className="text-blue-100">
-            Review and edit the detected project information
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-xl flex items-center">
+                <FileText className="w-5 h-5 mr-2" />
+                Parse Product
+              </CardTitle>
+              <CardDescription className="text-blue-100">
+                Review and edit the detected project information
+              </CardDescription>
+            </div>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={handleAIPopulate}
+              disabled={isLoadingAI || !readmeContent}
+              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+            >
+              {isLoadingAI ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Analyzing...
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  AI Populate
+                </>
+              )}
+            </Button>
+          </div>
         </CardHeader>
       </Card>
 
@@ -195,8 +273,16 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
             {/* Target Users */}
             <Card>
               <CardContent className="pt-6">
-                <Label>Target Users</Label>
-                <div className="flex gap-2 mt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Target Users</Label>
+                  {watchedValues.targetUsers.length === 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      AI will suggest
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex gap-2">
                   <Input
                     value={newTargetUser}
                     onChange={(e) => setNewTargetUser(e.target.value)}
@@ -239,8 +325,16 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
             {/* Tech Stack */}
             <Card>
               <CardContent className="pt-6">
-                <Label>Tech Stack</Label>
-                <div className="flex gap-2 mt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Tech Stack</Label>
+                  {watchedValues.techStack.length === 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      AI will suggest
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex gap-2">
                   <Input
                     value={newTech}
                     onChange={(e) => setNewTech(e.target.value)}
@@ -283,8 +377,16 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
             {/* Features */}
             <Card>
               <CardContent className="pt-6">
-                <Label>Key Features</Label>
-                <div className="flex gap-2 mt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <Label>Key Features</Label>
+                  {watchedValues.features.length === 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      <Sparkles className="w-3 h-3 mr-1" />
+                      AI will suggest
+                    </Badge>
+                  )}
+                </div>
+                <div className="flex gap-2">
                   <Input
                     value={newFeature}
                     onChange={(e) => setNewFeature(e.target.value)}
