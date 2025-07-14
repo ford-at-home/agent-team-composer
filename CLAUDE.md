@@ -1,5 +1,63 @@
 # CLAUDE.md
 
+## CRITICAL: Development & Testing Workflow
+
+**ALWAYS follow this workflow when making changes to agent-team-composer:**
+
+### After Making ANY Code Changes
+
+1. **Build and Deploy Changes:**
+   ```bash
+   npm run build:npm && npm link --force
+   ```
+   
+   **IMPORTANT:** You MUST use `npm run build:npm` (not `npm run build`) because it:
+   - Adds `.js` extensions to ES module imports
+   - Fixes module resolution issues
+   - Creates a properly packaged version
+
+2. **Verify Changes Are in Build:**
+   ```bash
+   ./scripts/verify-changes.sh
+   ```
+   
+   This script checks:
+   - Package version is correct
+   - Specific changes are present in the built files
+   - Global link is properly configured
+
+3. **User Can Test in Separate Workspace:**
+   ```bash
+   agent-team-composer --version  # Should show current version
+   agent-team-composer init       # Test the actual UI
+   ```
+
+### Common Issues & Solutions
+
+- **"Module not found" errors**: Run `npm run build:npm` (not just `npm run build`)
+- **Changes not showing**: Force re-link with `npm unlink -g agent-team-composer && npm link --force`
+- **Version showing wrong**: The version is now read from package.json dynamically
+
+### Build Commands Reference
+
+- `npm run build` - Standard build (DO NOT USE for testing)
+- `npm run build:npm` - Proper build with ES module fixes (USE THIS)
+- `npm run build:cli` - Only builds CLI
+- `npm run dev:auto` - Auto-rebuild on file changes (experimental)
+
+### Testing Checklist
+
+Before considering any change complete:
+- [ ] Run `npm run build:npm`
+- [ ] Run `npm link --force`
+- [ ] Run `./scripts/verify-changes.sh` and confirm all checks pass
+- [ ] Verify version with `agent-team-composer --version`
+- [ ] User has tested in their separate workspace
+
+**This workflow is MANDATORY for all changes to ensure the user can properly test.**
+
+---
+
 ## Prime Directive for Claude Flow SPARC
 
 You are operating within a Claude Flow SPARC project environment. Your role is to autonomously plan, execute, and report on tasks derived from a human-provided product spec, typically found in the README.md file of this repository.

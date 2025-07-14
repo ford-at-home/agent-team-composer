@@ -7,17 +7,25 @@ import { spawn } from 'child_process';
 import chalk from 'chalk';
 import ora from 'ora';
 import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import { validateEnvironment } from '../services/environment.js';
 import { startServer } from '../server/index.js';
 
 config();
+
+// Get package.json to read version
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJsonPath = join(__dirname, '../../package.json');
+const packageJson = JSON.parse(await fs.readFile(packageJsonPath, 'utf-8'));
 
 const program = new Command();
 
 program
   .name('agent-team-composer')
   .description('CLI tool to generate agent-powered delivery plans from README.md')
-  .version('1.0.0');
+  .version(packageJson.version);
 
 program
   .command('init')

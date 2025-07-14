@@ -10,6 +10,10 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "dev": "vite",
+    "dev:watch": "concurrently \"npm run watch:frontend\" \"npm run watch:cli\"",
+    "dev:auto": "node scripts/auto-deploy.js",
+    "watch:frontend": "vite build --watch",
+    "watch:cli": "tsc -p tsconfig.cli.json --watch",
     "build": "tsc && vite build && npm run build:cli",
     "build:cli": "tsc -p tsconfig.cli.json",
     "build:dev": "vite build --mode development",

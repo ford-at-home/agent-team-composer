@@ -6,12 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ArrowRight, FileText, Plus, X, Code, Eye, Sparkles, Loader2 } from 'lucide-react';
+import { ArrowRight, FileText, Plus, X, Sparkles, Loader2 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import ReactMarkdown from 'react-markdown';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/components/ui/use-toast';
 
 // Form validation schema
@@ -37,7 +35,6 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
   const [newTargetUser, setNewTargetUser] = useState('');
   const [newTech, setNewTech] = useState('');
   const [newFeature, setNewFeature] = useState('');
-  const [previewMode, setPreviewMode] = useState<'raw' | 'preview'>('preview');
   const [isLoadingAI, setIsLoadingAI] = useState(false);
   const { toast } = useToast();
 
@@ -206,9 +203,7 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
       </Card>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Left Column - Form Fields */}
-          <div className="space-y-4">
+        <div className="max-w-3xl mx-auto space-y-4">
             {/* Title */}
             <Card>
               <CardContent className="pt-6">
@@ -440,40 +435,6 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
                 )}
               </CardContent>
             </Card>
-          </div>
-
-          {/* Right Column - README Preview */}
-          <div className="lg:sticky lg:top-6">
-            <Card className="h-full max-h-[80vh] overflow-hidden">
-              <CardHeader>
-                <CardTitle className="text-lg">README Content</CardTitle>
-              </CardHeader>
-              <CardContent className="overflow-y-auto max-h-[60vh]">
-                <Tabs value={previewMode} onValueChange={(v) => setPreviewMode(v as 'raw' | 'preview')} defaultValue="preview">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="preview" className="text-xs">
-                      <Eye className="w-3 h-3 mr-1" />
-                      Preview
-                    </TabsTrigger>
-                    <TabsTrigger value="raw" className="text-xs">
-                      <Code className="w-3 h-3 mr-1" />
-                      Raw
-                    </TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="preview" className="mt-0">
-                    <div className="prose prose-sm dark:prose-invert max-w-none">
-                      <ReactMarkdown>{readmeContent || '# No README content available'}</ReactMarkdown>
-                    </div>
-                  </TabsContent>
-                  <TabsContent value="raw" className="mt-0">
-                    <pre className="text-xs bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-x-auto">
-                      <code>{readmeContent || 'No README content available'}</code>
-                    </pre>
-                  </TabsContent>
-                </Tabs>
-              </CardContent>
-            </Card>
-          </div>
         </div>
 
         {/* Actions */}
