@@ -339,22 +339,24 @@ const EpicIssueView = ({ phases, setPhases, onNext, onPrevious }: EpicIssueViewP
                                       </DialogDescription>
                                     </DialogHeader>
                                     <div className="mt-4">
-                                      <Tabs defaultValue="preview">
-                                        <TabsList>
-                                          <TabsTrigger value="preview">Preview</TabsTrigger>
-                                          <TabsTrigger value="markdown">Markdown</TabsTrigger>
-                                        </TabsList>
-                                        <TabsContent value="preview" className="prose prose-sm dark:prose-invert max-w-none">
-                                          <ReactMarkdown>
-                                            {`${issue.description}\n\n**Assigned Role:** ${issue.role}\n**Epic:** ${phase.title}`}
-                                          </ReactMarkdown>
-                                        </TabsContent>
-                                        <TabsContent value="markdown">
-                                          <pre className="text-xs bg-gray-50 dark:bg-gray-900 p-4 rounded overflow-auto">
-                                            {`${issue.description}\n\n**Assigned Role:** ${issue.role}\n**Epic:** ${phase.title}`}
-                                          </pre>
-                                        </TabsContent>
-                                      </Tabs>
+                                      {issue && (
+                                        <Tabs defaultValue="preview">
+                                          <TabsList>
+                                            <TabsTrigger value="preview">Preview</TabsTrigger>
+                                            <TabsTrigger value="markdown">Markdown</TabsTrigger>
+                                          </TabsList>
+                                          <TabsContent value="preview" className="prose prose-sm dark:prose-invert max-w-none">
+                                            <ReactMarkdown>
+                                              {`${issue.description}\n\n**Assigned Role:** ${issue.role}\n**Epic:** ${phase.title}`}
+                                            </ReactMarkdown>
+                                          </TabsContent>
+                                          <TabsContent value="markdown">
+                                            <pre className="text-xs bg-gray-50 dark:bg-gray-900 p-4 rounded overflow-auto">
+                                              {`${issue.description}\n\n**Assigned Role:** ${issue.role}\n**Epic:** ${phase.title}`}
+                                            </pre>
+                                          </TabsContent>
+                                        </Tabs>
+                                      )}
                                     </div>
                                   </DialogContent>
                                 </Dialog>

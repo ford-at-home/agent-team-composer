@@ -434,7 +434,7 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
                 <CardTitle className="text-lg">README Content</CardTitle>
               </CardHeader>
               <CardContent className="overflow-y-auto max-h-[60vh]">
-                <Tabs value={previewMode} onValueChange={(v) => setPreviewMode(v as 'raw' | 'preview')}>
+                <Tabs value={previewMode} onValueChange={(v) => setPreviewMode(v as 'raw' | 'preview')} defaultValue="preview">
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="preview" className="text-xs">
                       <Eye className="w-3 h-3 mr-1" />
