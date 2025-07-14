@@ -7,10 +7,8 @@ import { spawn } from 'child_process';
 import chalk from 'chalk';
 import ora from 'ora';
 import { config } from 'dotenv';
-import { validateEnvironment } from '../services/environment';
-import { parseReadme } from '../services/readme-parser';
-import { generateProjectPlan } from '../services/llm-orchestrator';
-import { startServer } from '../server/index';
+import { validateEnvironment } from '../services/environment.js';
+import { startServer } from '../server/index.js';
 
 config();
 
@@ -59,52 +57,52 @@ program
       }
       spinner.succeed('Environment validated');
       
-      // Step 2: Read and parse README
-      spinner.start('Reading README.md...');
-      const readmePath = path.resolve(process.cwd(), options.readme);
+      // Step 2: Check for existing data or create minimal placeholder
+      const tempDataPath = path.join(process.cwd(), '.agent-team-composer-data.json');
       
       try {
-        const readmeContent = await fs.readFile(readmePath, 'utf-8');
-        const projectInfo = await parseReadme(readmeContent);
-        spinner.succeed('README.md parsed successfully');
-        
-        console.log(chalk.blue('\nDetected project:'));
-        console.log(chalk.gray(`  Title: ${projectInfo.title}`));
-        console.log(chalk.gray(`  Domain: ${projectInfo.domain}`));
-        
-        // Step 3: Generate project plan using LLM cascade
-        spinner.start('Generating project plan with Claude...');
-        const projectData = await generateProjectPlan(projectInfo, readmeContent, options.fresh);
-        spinner.succeed('Project plan generated');
-        
-        console.log(chalk.green(`\nGenerated ${projectData.phases.length} phases with ${projectData.phases.reduce((acc, p) => acc + p.issues.length, 0)} total tasks`));
-        
-        // Step 4: Save project data to temp file for server
-        const tempDataPath = path.join(process.cwd(), '.agent-team-composer-data.json');
-        await fs.writeFile(tempDataPath, JSON.stringify(projectData, null, 2));
-        
-        // Step 5: Start server and launch UI
-        spinner.start('Starting localhost UI...');
-        const serverUrl = await startServer(parseInt(options.port), tempDataPath);
-        spinner.succeed(`UI started at ${serverUrl}`);
-        
-        // Step 6: Open browser
-        console.log(chalk.blue('\nOpening browser...'));
-        const start = process.platform === 'darwin' ? 'open' : 
-                     process.platform === 'win32' ? 'start' : 'xdg-open';
-        spawn(start, [serverUrl], { shell: true });
-        
-        console.log(chalk.green('\n✅ Agent Team Composer is ready!'));
-        console.log(chalk.gray('\nPress Ctrl+C to stop the server'));
-        
-      } catch (error) {
-        if (error.code === 'ENOENT') {
-          spinner.fail(`README.md not found at ${readmePath}`);
-          console.error(chalk.red('\nPlease ensure you have a README.md file in your repository'));
-        } else {
-          throw error;
-        }
+        // Check if we have existing data
+        await fs.access(tempDataPath);
+        spinner.succeed('Found existing project data');
+      } catch {
+        // Create minimal placeholder data - NO LLM CALLS
+        const placeholderData = {
+          title: "Project",
+          description: "Initializing...",
+          phases: [],
+          metadata: {
+            initialized: false,
+            timestamp: new Date().toISOString()
+          }
+        };
+        await fs.writeFile(tempDataPath, JSON.stringify(placeholderData, null, 2));
+        spinner.succeed('Created initial data structure');
       }
+      
+      // Step 3: Start server and launch UI immediately
+      spinner.start('Starting localhost UI...');
+      const serverUrl = await startServer(parseInt(options.port), tempDataPath);
+      spinner.succeed(`UI started at ${serverUrl}`);
+      
+      // Step 4: Open browser
+      console.log(chalk.blue('\nOpening browser...'));
+      const start = process.platform === 'darwin' ? 'open' : 
+                   process.platform === 'win32' ? 'start' : 'xdg-open';
+      spawn(start, [serverUrl], { shell: true });
+      
+      console.log(chalk.green('\n✅ Agent Team Composer is ready!'));
+      console.log(chalk.gray('\nPress Ctrl+C to stop the server'));
+      
+      // Handle process termination
+      process.on('SIGINT', () => {
+        console.log(chalk.yellow('\n\nShutting down server...'));
+        process.exit(0);
+      });
+      
+      process.on('SIGTERM', () => {
+        console.log(chalk.yellow('\n\nShutting down server...'));
+        process.exit(0);
+      });
       
     } catch (error) {
       spinner.fail('An error occurred');

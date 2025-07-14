@@ -432,6 +432,8 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
             <Card className="h-full max-h-[80vh] overflow-hidden">
               <CardHeader>
                 <CardTitle className="text-lg">README Content</CardTitle>
+              </CardHeader>
+              <CardContent className="overflow-y-auto max-h-[60vh]">
                 <Tabs value={previewMode} onValueChange={(v) => setPreviewMode(v as 'raw' | 'preview')}>
                   <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="preview" className="text-xs">
@@ -443,19 +445,17 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
                       Raw
                     </TabsTrigger>
                   </TabsList>
+                  <TabsContent value="preview" className="mt-0">
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      <ReactMarkdown>{readmeContent || '# No README content available'}</ReactMarkdown>
+                    </div>
+                  </TabsContent>
+                  <TabsContent value="raw" className="mt-0">
+                    <pre className="text-xs bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-x-auto">
+                      <code>{readmeContent || 'No README content available'}</code>
+                    </pre>
+                  </TabsContent>
                 </Tabs>
-              </CardHeader>
-              <CardContent className="overflow-y-auto max-h-[60vh]">
-                <TabsContent value="preview" className="mt-0">
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <ReactMarkdown>{readmeContent || '# No README content available'}</ReactMarkdown>
-                  </div>
-                </TabsContent>
-                <TabsContent value="raw" className="mt-0">
-                  <pre className="text-xs bg-gray-50 dark:bg-gray-900 p-4 rounded-lg overflow-x-auto">
-                    <code>{readmeContent || 'No README content available'}</code>
-                  </pre>
-                </TabsContent>
               </CardContent>
             </Card>
           </div>
