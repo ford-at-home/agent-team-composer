@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -8,7 +8,9 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronDown, ChevronRight, Users, FileText, ArrowLeft, ArrowRight, CheckCircle, Github, Loader2, Milestone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { GitHubService } from '@/services/github-service';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Label } from '@/components/ui/label';
+import ProgressBar from '@/components/ui/progress-bar';
 
 interface Phase {
   id: string;
@@ -36,7 +38,28 @@ const LifecyclePhases = ({ phases, setPhases, onNext, onPrevious, repository }: 
   const [isCreatingMilestones, setIsCreatingMilestones] = useState(false);
   const [milestonesCreated, setMilestonesCreated] = useState(false);
   const [milestoneMap, setMilestoneMap] = useState<Map<string, number>>(new Map());
+  const [repositories, setRepositories] = useState<{ name: string; full_name: string; }[]>([]);
+  const [selectedRepository, setSelectedRepository] = useState<string>('');
+  const [milestoneCreationProgress, setMilestoneCreationProgress] = useState<{ current: number; total: number; status: string } | null>(null);
   const { toast } = useToast();
+
+  // Load repositories on component mount
+  useEffect(() => {
+    loadRepositories();
+  }, []);
+
+  // Load GitHub repositories
+  const loadRepositories = async () => {
+    try {
+      const response = await fetch('/api/github/repositories');
+      if (response.ok) {
+        const repos = await response.json();
+        setRepositories(repos);
+      }
+    } catch (error) {
+      console.error('Failed to load repositories:', error);
+    }
+  };
 
   const allRoles = [
     'Product Owner',
@@ -98,33 +121,62 @@ const LifecyclePhases = ({ phases, setPhases, onNext, onPrevious, repository }: 
   const canProceed = approvedCount >= Math.ceil(phases.length * 0.5); // At least 50% approved
 
   const handleCreateMilestones = async () => {
-    if (!repository) {
+    if (!selectedRepository) {
       toast({
         title: "Repository not selected",
-        description: "Please select a repository in the next step",
+        description: "Please select a repository first",
         variant: "destructive",
       });
       return;
     }
 
     setIsCreatingMilestones(true);
+    setMilestoneCreationProgress({ current: 0, total: 3, status: 'Preparing milestone creation...' });
     
     try {
-      const githubService = new GitHubService();
-      const results = await githubService.createMilestones(repository, phases);
+      setMilestoneCreationProgress({ current: 1, total: 3, status: 'Creating GitHub milestones...' });
+      
+      // Use server API endpoint instead of direct GitHub service
+      const response = await fetch('/api/github/create-milestones-and-issues', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          repository: selectedRepository,
+          phases: phases.filter(p => p.approved)
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to create milestones');
+      }
+      
+      const result = await response.json();
+      
+      setMilestoneCreationProgress({ current: 2, total: 3, status: 'Processing results...' });
       
       // Store milestone numbers for later use
       const newMap = new Map<string, number>();
-      results.forEach(result => {
-        newMap.set(result.phase, result.milestoneNumber);
+      result.milestones.forEach((milestone: { phase: string; milestoneNumber: number }) => {
+        newMap.set(milestone.phase, milestone.milestoneNumber);
       });
       setMilestoneMap(newMap);
       setMilestonesCreated(true);
       
+      setMilestoneCreationProgress({ current: 3, total: 3, status: 'Milestones created successfully!' });
+      
       toast({
         title: "Milestones created successfully!",
-        description: `Created ${results.length} milestones in GitHub`,
+        description: `Created ${result.milestones.length} milestones in GitHub`,
       });
+      
+      // Move to next step after successful creation
+      setTimeout(() => {
+        onNext();
+      }, 1000);
+      
     } catch (error) {
       toast({
         title: "Failed to create milestones",
@@ -132,12 +184,42 @@ const LifecyclePhases = ({ phases, setPhases, onNext, onPrevious, repository }: 
         variant: "destructive",
       });
     } finally {
-      setIsCreatingMilestones(false);
+      setTimeout(() => {
+        setIsCreatingMilestones(false);
+        setMilestoneCreationProgress(null);
+      }, 2000);
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 relative">
+      {/* Milestone Creation Loading Overlay */}
+      {isCreatingMilestones && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center">
+          <Card className="max-w-lg mx-auto">
+            <CardContent className="flex flex-col items-center justify-center py-12 px-8">
+              <Loader2 className="w-12 h-12 animate-spin text-indigo-600 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Creating GitHub Milestones</h3>
+              <p className="text-gray-600 text-center mb-6">
+                Creating project milestones in your GitHub repository...
+              </p>
+              
+              {milestoneCreationProgress && (
+                <div className="w-full">
+                  <ProgressBar 
+                    current={milestoneCreationProgress.current}
+                    total={milestoneCreationProgress.total}
+                    title={milestoneCreationProgress.status}
+                    showNumbers={true}
+                    animated={true}
+                  />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Progress Header */}
       <Card className="border-0 shadow-lg">
         <CardHeader className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
@@ -184,15 +266,44 @@ const LifecyclePhases = ({ phases, setPhases, onNext, onPrevious, repository }: 
         </CardHeader>
       </Card>
 
-      {/* Milestone Info */}
-      {!repository && approvedCount > 0 && (
-        <Alert>
-          <Milestone className="h-4 w-4" />
-          <AlertDescription>
-            GitHub milestones will be created when you select a repository in the next step.
-            Each approved phase will become a milestone to track your project's progress.
-          </AlertDescription>
-        </Alert>
+      {/* Repository Selection */}
+      {approvedCount > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">GitHub Repository</CardTitle>
+            <CardDescription>Select the repository where milestones will be created</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="repository-select">Repository</Label>
+                <Select value={selectedRepository} onValueChange={setSelectedRepository}>
+                  <SelectTrigger id="repository-select" className="mt-1">
+                    <SelectValue placeholder="Select a repository" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {repositories.map(repo => (
+                      <SelectItem key={repo.full_name} value={repo.full_name}>
+                        {repo.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {selectedRepository && (
+                <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
+                  <p className="text-sm text-indigo-800">
+                    <strong>Selected:</strong> {selectedRepository}
+                  </p>
+                  <p className="text-xs text-indigo-600 mt-1">
+                    GitHub milestones will be created in this repository for each approved phase
+                  </p>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Phases */}
@@ -321,12 +432,21 @@ const LifecyclePhases = ({ phases, setPhases, onNext, onPrevious, repository }: 
           Back to Summary
         </Button>
         <Button 
-          onClick={onNext}
-          disabled={!canProceed}
+          onClick={handleCreateMilestones}
+          disabled={!canProceed || !selectedRepository || isCreatingMilestones}
           className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700"
         >
-          Review & Submit
-          <ArrowRight className="w-4 h-4 ml-2" />
+          {isCreatingMilestones ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Creating Milestones...
+            </>
+          ) : (
+            <>
+              Create Milestones & Continue
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </>
+          )}
         </Button>
       </div>
     </div>

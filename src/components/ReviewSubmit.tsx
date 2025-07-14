@@ -9,7 +9,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GitHubService } from '@/services/github-service';
 
 interface Phase {
   id: string;
@@ -133,31 +132,43 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
     }
     
     try {
-      // Step 1: Create milestones
-      const githubService = new GitHubService();
-      const milestoneResults = await githubService.createMilestones(targetRepo, phases);
+      // Use server API endpoint to create milestones and issues
+      const response = await fetch('/api/github/create-milestones-and-issues', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          repository: targetRepo,
+          phases: phases.filter(p => p.approved)
+        }),
+      });
       
-      // Store milestone numbers for issue creation
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to create GitHub resources');
+      }
+      
+      const result = await response.json();
+      
+      // Store milestone numbers for later use
       const newMilestoneMap = new Map<string, number>();
-      milestoneResults.forEach(result => {
-        newMilestoneMap.set(result.phase, result.milestoneNumber);
+      result.milestones.forEach((milestone: { phase: string; milestoneNumber: number }) => {
+        newMilestoneMap.set(milestone.phase, milestone.milestoneNumber);
       });
       setMilestoneMap(newMilestoneMap);
       setCreatingMilestones(false);
       
       toast({
         title: "Milestones created!",
-        description: `Created ${milestoneResults.length} milestones in GitHub`,
+        description: `Created ${result.milestones.length} milestones in GitHub`,
       });
-      
-      // Step 2: Create issues with milestone associations
-      const issueResults = await githubService.createIssuesFromPhases(targetRepo, phases, newMilestoneMap);
       
       setSubmitted(true);
       
       toast({
         title: "Successfully pushed to GitHub!",
-        description: `Created ${milestoneResults.length} milestones, ${approvedPhases.length} epics and ${totalIssues} issues in ${targetRepo}.`,
+        description: `Created ${result.milestones.length} milestones, ${approvedPhases.length} epics and ${totalIssues} issues in ${targetRepo}.`,
       });
     } catch (error) {
       toast({

@@ -115,7 +115,7 @@ export class LLMOrchestrator {
     };
   }
 
-  private async generatePhases(
+  async generatePhases(
     projectInfo: {
       title: string;
       description: string;

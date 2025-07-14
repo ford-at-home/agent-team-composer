@@ -3,7 +3,8 @@
 import { Command } from 'commander';
 import { promises as fs } from 'fs';
 import path from 'path';
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
+import { promisify } from 'util';
 import chalk from 'chalk';
 import ora from 'ora';
 import { config } from 'dotenv';
@@ -12,7 +13,52 @@ import { dirname, join } from 'path';
 import { validateEnvironment } from '../services/environment.js';
 import { startServer } from '../server/index.js';
 
+const execAsync = promisify(exec);
+
 config();
+
+// Function to kill processes on a specific port
+async function killPortProcess(port: number): Promise<void> {
+  try {
+    const { stdout } = await execAsync(`lsof -ti:${port}`);
+    if (stdout.trim()) {
+      const pids = stdout.trim().split('\n');
+      for (const pid of pids) {
+        if (pid) {
+          try {
+            await execAsync(`kill -9 ${pid}`);
+            console.log(`    Killed process ${pid} on port ${port}`);
+          } catch (error) {
+            // Process may already be dead, ignore
+          }
+        }
+      }
+    }
+  } catch (error) {
+    // No process found on port, which is fine
+  }
+}
+
+// Function to clean up all ports and processes
+async function cleanupPortsAndProcesses(): Promise<void> {
+  const ports = [3000, 3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3009, 3010];
+  
+  // Kill all ports sequentially
+  for (const port of ports) {
+    await killPortProcess(port);
+  }
+  
+  // Kill any node processes that might be agent-team-composer
+  try {
+    await execAsync('pkill -f "agent-team-composer"');
+    console.log('    Killed any existing agent-team-composer processes');
+  } catch (error) {
+    // No processes found, which is fine
+  }
+  
+  // Give it a moment for processes to fully terminate
+  await new Promise(resolve => setTimeout(resolve, 1000));
+}
 
 // Get package.json to read version
 const __filename = fileURLToPath(import.meta.url);
@@ -96,7 +142,17 @@ program
         spinner.succeed('Created initial data structure');
       }
       
-      // Step 3: Start server and launch UI immediately
+      // Step 3: Clean up any existing processes first
+      spinner.start('Cleaning up existing processes...');
+      try {
+        await cleanupPortsAndProcesses();
+        spinner.succeed('Cleaned up existing processes');
+      } catch (error) {
+        spinner.warn('Could not clean up existing processes (continuing anyway)');
+        console.log(chalk.yellow(`  Warning: ${error.message}`));
+      }
+      
+      // Step 4: Start server and launch UI immediately
       spinner.start('Starting localhost UI...');
       const serverUrl = await startServer(parseInt(options.port), tempDataPath);
       spinner.succeed(`UI started at ${serverUrl}`);

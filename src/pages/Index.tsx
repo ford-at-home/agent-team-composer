@@ -76,7 +76,7 @@ const Index = () => {
 
   const steps = [
     { id: 0, title: 'Parse Product', icon: FileText },
-    { id: 1, title: 'Sprint View', icon: GitBranch },
+    { id: 1, title: 'Phase Generation', icon: GitBranch },
     { id: 2, title: 'Epic View', icon: FolderOpen },
     { id: 3, title: 'Issues View', icon: Edit3 },
     { id: 4, title: 'GitHub Sync', icon: CheckCircle2 }
@@ -132,30 +132,22 @@ const Index = () => {
             readmeContent={readmeContent}
             initialData={parsedMetadata}
             onNext={async (data) => {
+              // Save the parsed metadata
               setParsedMetadata(data);
-              setIsGeneratingPlan(true);
+              setProjectSummary({
+                title: data.title,
+                description: data.description,
+                domain: data.domain,
+                targetUsers: data.targetUsers,
+                techStack: data.techStack,
+                features: data.features,
+                complexity: data.complexity,
+                objectives: []
+              });
               
-              // Generate project plan with the form data
-              try {
-                const response = await fetch('/api/generate-plan', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    metadata: data,
-                    readmeContent: readmeContent
-                  }),
-                });
-
-                if (!response.ok) {
-                  throw new Error('Failed to generate project plan');
-                }
-
-                const projectPlan = await response.json();
-                
-                // Update state with the generated plan including all form fields
-                setProjectSummary(projectPlan.summary || {
+              // Save to backend (just the metadata, not phases yet)
+              await updateProjectData({ 
+                summary: {
                   title: data.title,
                   description: data.description,
                   domain: data.domain,
@@ -164,39 +156,46 @@ const Index = () => {
                   features: data.features,
                   complexity: data.complexity,
                   objectives: []
-                });
-                setPhases(projectPlan.phases || []);
-                
-                // Update the project data hook
-                updateProjectData(projectPlan);
-                
-                handleNext();
-              } catch (error) {
-                console.error('Failed to generate project plan:', error);
-                // Still move forward with basic data
-                setProjectSummary({
-                  title: data.title,
-                  description: data.description,
-                  domain: data.domain,
-                  targetUsers: data.targetUsers,
-                  techStack: data.techStack,
-                  features: data.features,
-                  complexity: data.complexity,
-                  objectives: []
-                });
-                handleNext();
-              } finally {
-                setIsGeneratingPlan(false);
-              }
+                },
+                phases: [] 
+              });
+              
+              // Move to step 2 where phases will be generated
+              handleNext();
             }}
           />
         );
       case 1:
+        // Generate phases if we don't have them yet
+        if (phases.length === 0 && projectSummary && !isGeneratingPlan) {
+          setIsGeneratingPlan(true);
+          
+          // Generate ONLY phases
+          fetch('/api/generate-phases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              metadata: projectSummary,
+              readmeContent: readmeContent
+            })
+          })
+          .then(res => res.json())
+          .then(data => {
+            setPhases(data.phases || []);
+            setIsGeneratingPlan(false);
+          })
+          .catch(err => {
+            console.error('Failed to generate phases:', err);
+            setIsGeneratingPlan(false);
+          });
+        }
+        
         return (
-          <ProjectSummary 
-            summary={projectSummary}
-            setSummary={setProjectSummary}
+          <LifecyclePhases 
+            phases={phases}
+            setPhases={setPhases}
             onNext={handleNext}
+            onPrevious={handlePrevious}
           />
         );
       case 2:

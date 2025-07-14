@@ -28,6 +28,7 @@
     "test:coverage": "vitest --coverage",
     "test:once": "vitest run",
     "test:build": "vitest run test/build.integration.test.js",
+    "deploy": "./scripts/deploy-global.sh",
     "validate:build": "node scripts/validate-build.js",
     "test:e2e": "playwright test e2e/unified-flow-test.spec.ts",
     "test:e2e:all": "playwright test",

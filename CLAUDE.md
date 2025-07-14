@@ -8,6 +8,11 @@
 
 1. **I MUST Build and Deploy Changes:**
    ```bash
+   ./scripts/deploy-global.sh
+   ```
+   
+   OR manually:
+   ```bash
    npm run build:npm && npm link --force
    ```
    
@@ -49,8 +54,7 @@
 
 Before telling the user any change is complete, I MUST:
 - [ ] Update any affected E2E tests to match the changes
-- [ ] Run `npm run build:npm`
-- [ ] Run `npm link --force`
+- [ ] Run `./scripts/deploy-global.sh` (builds and links automatically)
 - [ ] Run `./scripts/verify-changes.sh` and confirm all checks pass
 - [ ] Run `./scripts/test-ui.sh` to run automated browser tests
 - [ ] Verify tests pass or fix any failures
@@ -64,7 +68,7 @@ Before telling the user any change is complete, I MUST:
 ### Proper Ending Format
 
 ❌ WRONG: "Now test with: `agent-team-composer init`"
-✅ RIGHT: "I've run `npm run build:npm && npm link --force` and verified the changes. You can now test in your workspace."
+✅ RIGHT: "I've run `./scripts/deploy-global.sh` and verified the changes. You can now test in your workspace."
 
 ---
 
