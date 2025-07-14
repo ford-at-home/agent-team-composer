@@ -40,9 +40,10 @@ const Index = () => {
 
   const fetchReadmeContent = async () => {
     try {
-      const response = await fetch('/README.md');
+      const response = await fetch('/api/readme');
       if (response.ok) {
-        const content = await response.text();
+        const data = await response.json();
+        const content = data.content;
         setReadmeContent(content);
         
         // Parse README to get initial metadata

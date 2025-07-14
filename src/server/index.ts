@@ -60,6 +60,23 @@ app.get('/api/project', (req, res) => {
   res.json(projectData);
 });
 
+// API endpoint to get README content from the current working directory
+app.get('/api/readme', asyncHandler(async (req, res) => {
+  try {
+    const readmePath = path.join(process.cwd(), 'README.md');
+    const content = await fs.readFile(readmePath, 'utf8');
+    res.json({ content });
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return res.status(404).json({ 
+        error: 'README.md not found',
+        details: 'No README.md file found in the current directory'
+      });
+    }
+    throw error;
+  }
+}));
+
 // API endpoint to update project data
 app.put('/api/project', async (req, res) => {
   projectData = req.body;
