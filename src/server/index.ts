@@ -77,6 +77,43 @@ app.get('/api/readme', asyncHandler(async (req, res) => {
   }
 }));
 
+// API endpoint for AI form population
+app.post('/api/populate-form', asyncHandler(async (req, res) => {
+  const { readmeContent, existingData } = req.body;
+  
+  if (!readmeContent) {
+    return res.status(400).json({
+      error: 'Missing README content',
+      details: 'README content is required for AI form population'
+    });
+  }
+  
+  try {
+    // Import the AI form populator
+    const { populateFormWithAI } = await import('../services/ai-form-populator.js');
+    
+    // Call the AI service
+    const suggestions = await populateFormWithAI(readmeContent, existingData);
+    
+    res.json(suggestions);
+  } catch (error) {
+    console.error('AI form population error:', error);
+    
+    // Check if it's an API key error
+    if (error.message?.includes('API key') || error.message?.includes('authentication')) {
+      return res.status(401).json({
+        error: 'Authentication required',
+        details: 'Please ensure ANTHROPIC_API_KEY environment variable is set'
+      });
+    }
+    
+    res.status(500).json({
+      error: 'Failed to populate form with AI',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+}));
+
 // API endpoint to update project data
 app.put('/api/project', async (req, res) => {
   projectData = req.body;

@@ -12,7 +12,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import ReactMarkdown from 'react-markdown';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { populateFormWithAI } from '@/services/ai-form-populator';
 import { useToast } from '@/components/ui/use-toast';
 
 // Form validation schema
@@ -84,12 +83,28 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
 
     setIsLoadingAI(true);
     try {
-      const suggestions = await populateFormWithAI(readmeContent, {
-        title: getValues('title'),
-        description: getValues('description'),
-        features: getValues('features'),
-        techStack: getValues('techStack')
+      const response = await fetch('/api/populate-form', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          readmeContent,
+          existingData: {
+            title: getValues('title'),
+            description: getValues('description'),
+            features: getValues('features'),
+            techStack: getValues('techStack')
+          }
+        }),
       });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.details || errorData.error || 'Failed to populate form');
+      }
+
+      const suggestions = await response.json();
 
       // Update form with AI suggestions
       setValue('targetUsers', suggestions.targetUsers);
@@ -106,7 +121,7 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
       console.error('AI population failed:', error);
       toast({
         title: "AI suggestion failed",
-        description: "Could not generate suggestions. Please fill manually.",
+        description: error instanceof Error ? error.message : "Could not generate suggestions. Please fill manually.",
         variant: "destructive"
       });
     } finally {
