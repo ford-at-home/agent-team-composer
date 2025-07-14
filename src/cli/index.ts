@@ -68,20 +68,29 @@ program
       // Step 2: Check for existing data or create minimal placeholder
       const tempDataPath = path.join(process.cwd(), '.agent-team-composer-data.json');
       
+      // If --fresh flag is used, delete existing data
+      if (options.fresh) {
+        try {
+          await fs.unlink(tempDataPath);
+          spinner.succeed('Cleared existing project data (--fresh flag)');
+        } catch {
+          // File doesn't exist, that's fine
+        }
+      }
+      
       try {
-        // Check if we have existing data
-        await fs.access(tempDataPath);
-        spinner.succeed('Found existing project data');
+        // Check if we have existing data (only if not using --fresh)
+        if (!options.fresh) {
+          await fs.access(tempDataPath);
+          spinner.succeed('Found existing project data');
+        } else {
+          throw new Error('Fresh start requested');
+        }
       } catch {
         // Create minimal placeholder data - NO LLM CALLS
         const placeholderData = {
-          title: "Project",
-          description: "Initializing...",
-          phases: [],
-          metadata: {
-            initialized: false,
-            timestamp: new Date().toISOString()
-          }
+          summary: null,  // Start with null summary to show ParseProduct form
+          phases: []
         };
         await fs.writeFile(tempDataPath, JSON.stringify(placeholderData, null, 2));
         spinner.succeed('Created initial data structure');

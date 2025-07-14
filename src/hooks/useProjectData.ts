@@ -60,13 +60,17 @@ export function useProjectData() {
     }
   };
 
-  const createGitHubIssues = async (phases: ProjectData['phases']) => {
+  const createGitHubIssues = async (phases: ProjectData['phases'], milestoneMap?: Map<string, number>) => {
     try {
       const apiUrl = import.meta.env.DEV ? 'http://localhost:3000/api/github/create-issues' : '/api/github/create-issues';
+      
+      // Convert Map to object for JSON serialization
+      const milestoneData = milestoneMap ? Object.fromEntries(milestoneMap) : undefined;
+      
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phases })
+        body: JSON.stringify({ phases, milestoneMap: milestoneData })
       });
       
       if (!response.ok) {

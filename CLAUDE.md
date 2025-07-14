@@ -2,21 +2,21 @@
 
 ## CRITICAL: Development & Testing Workflow
 
-**ALWAYS follow this workflow when making changes to agent-team-composer:**
+**I (Claude) MUST ALWAYS RUN THESE COMMANDS AFTER MAKING ANY CODE CHANGES:**
 
 ### After Making ANY Code Changes
 
-1. **Build and Deploy Changes:**
+1. **I MUST Build and Deploy Changes:**
    ```bash
    npm run build:npm && npm link --force
    ```
    
-   **IMPORTANT:** You MUST use `npm run build:npm` (not `npm run build`) because it:
+   **IMPORTANT:** I MUST use `npm run build:npm` (not `npm run build`) because it:
    - Adds `.js` extensions to ES module imports
    - Fixes module resolution issues
    - Creates a properly packaged version
 
-2. **Verify Changes Are in Build:**
+2. **I MUST Verify Changes Are in Build:**
    ```bash
    ./scripts/verify-changes.sh
    ```
@@ -26,7 +26,7 @@
    - Specific changes are present in the built files
    - Global link is properly configured
 
-3. **User Can Test in Separate Workspace:**
+3. **THEN the User Can Test in Their Separate Workspace:**
    ```bash
    agent-team-composer --version  # Should show current version
    agent-team-composer init       # Test the actual UI
@@ -45,16 +45,26 @@
 - `npm run build:cli` - Only builds CLI
 - `npm run dev:auto` - Auto-rebuild on file changes (experimental)
 
-### Testing Checklist
+### Testing Checklist - I (Claude) MUST DO THIS
 
-Before considering any change complete:
+Before telling the user any change is complete, I MUST:
+- [ ] Update any affected E2E tests to match the changes
 - [ ] Run `npm run build:npm`
 - [ ] Run `npm link --force`
 - [ ] Run `./scripts/verify-changes.sh` and confirm all checks pass
-- [ ] Verify version with `agent-team-composer --version`
-- [ ] User has tested in their separate workspace
+- [ ] Run `./scripts/test-ui.sh` to run automated browser tests
+- [ ] Verify tests pass or fix any failures
+- [ ] Tell the user what version to expect
+- [ ] NEVER end with "Now test with..." or "Here's what to run..."
+- [ ] ALWAYS end with "I've run [commands] and you can now test"
 
-**This workflow is MANDATORY for all changes to ensure the user can properly test.**
+**I MUST RUN THESE COMMANDS MYSELF. The user should NOT have to build or link anything.**
+**I MUST UPDATE AND RUN TESTS for every UI change.**
+
+### Proper Ending Format
+
+❌ WRONG: "Now test with: `agent-team-composer init`"
+✅ RIGHT: "I've run `npm run build:npm && npm link --force` and verified the changes. You can now test in your workspace."
 
 ---
 

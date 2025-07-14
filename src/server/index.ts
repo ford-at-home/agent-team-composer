@@ -162,8 +162,9 @@ app.post('/api/generate-plan', asyncHandler(async (req, res) => {
 
 // Input validation schema
 const CreateIssuesSchema = z.object({
-  repository: z.string().regex(/^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/),
-  phases: z.array(z.any()) // Will be validated in GitHubService
+  repository: z.string().regex(/^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/).optional(), // Made optional, will use from UI
+  phases: z.array(z.any()), // Will be validated in GitHubService
+  milestoneMap: z.record(z.string(), z.number()).optional() // Optional milestone mapping
 });
 
 // API endpoint to check GitHub authentication
@@ -211,7 +212,7 @@ app.post('/api/github/create-issues', async (req, res) => {
   try {
     // Validate input
     const validatedInput = CreateIssuesSchema.parse(req.body);
-    const { repository, phases } = validatedInput;
+    const { repository, phases, milestoneMap } = validatedInput;
     
     console.log(`Creating issues for ${repository}...`);
     
@@ -227,8 +228,11 @@ app.post('/api/github/create-issues', async (req, res) => {
       });
     }
     
-    // Create issues
-    const results = await githubService.createIssuesFromPhases(repository, phases);
+    // Convert milestone map from object back to Map
+    const milestoneMapInstance = milestoneMap ? new Map(Object.entries(milestoneMap)) : undefined;
+    
+    // Create issues with milestone associations
+    const results = await githubService.createIssuesFromPhases(repository, phases, milestoneMapInstance);
     
     res.json({ success: true, results });
     
@@ -271,11 +275,21 @@ export async function startServer(port: number, tempDataPath: string): Promise<s
     // Check if dist directory exists in the package
     await fs.access(distPath);
     
-    // Serve static files from the package's dist directory
-    app.use(express.static(distPath));
+    // Serve static files from the package's dist directory with no-cache headers
+    app.use(express.static(distPath, {
+      setHeaders: (res, path) => {
+        // Prevent caching during development
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+    }));
     
     // Fallback to index.html for client-side routing
     app.get('*', (req, res) => {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
       res.sendFile(path.join(distPath, 'index.html'));
     });
   } catch (error) {

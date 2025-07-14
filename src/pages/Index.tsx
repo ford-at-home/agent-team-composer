@@ -99,6 +99,10 @@ const Index = () => {
   };
 
   const renderStepContent = () => {
+    console.log('🔍 Debug - Current step:', currentStep);
+    console.log('🔍 Debug - Project summary:', projectSummary);
+    console.log('🔍 Debug - Loading:', loading);
+    
     if (loading) {
       return (
         <Card className="max-w-md mx-auto">

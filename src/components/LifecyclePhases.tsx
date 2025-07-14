@@ -5,7 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { ChevronDown, ChevronRight, Users, FileText, ArrowLeft, ArrowRight, CheckCircle } from 'lucide-react';
+import { ChevronDown, ChevronRight, Users, FileText, ArrowLeft, ArrowRight, CheckCircle, Github, Loader2, Milestone } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { GitHubService } from '@/services/github-service';
 
 interface Phase {
   id: string;
@@ -25,10 +28,15 @@ interface LifecyclePhasesProps {
   setPhases: (phases: Phase[]) => void;
   onNext: () => void;
   onPrevious: () => void;
+  repository?: string;
 }
 
-const LifecyclePhases = ({ phases, setPhases, onNext, onPrevious }: LifecyclePhasesProps) => {
+const LifecyclePhases = ({ phases, setPhases, onNext, onPrevious, repository }: LifecyclePhasesProps) => {
   const [openPhases, setOpenPhases] = useState<string[]>([phases[0]?.id]);
+  const [isCreatingMilestones, setIsCreatingMilestones] = useState(false);
+  const [milestonesCreated, setMilestonesCreated] = useState(false);
+  const [milestoneMap, setMilestoneMap] = useState<Map<string, number>>(new Map());
+  const { toast } = useToast();
 
   const allRoles = [
     'Product Owner',
@@ -89,6 +97,45 @@ const LifecyclePhases = ({ phases, setPhases, onNext, onPrevious }: LifecyclePha
   const approvedCount = phases.filter(p => p.approved).length;
   const canProceed = approvedCount >= Math.ceil(phases.length * 0.5); // At least 50% approved
 
+  const handleCreateMilestones = async () => {
+    if (!repository) {
+      toast({
+        title: "Repository not selected",
+        description: "Please select a repository in the next step",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsCreatingMilestones(true);
+    
+    try {
+      const githubService = new GitHubService();
+      const results = await githubService.createMilestones(repository, phases);
+      
+      // Store milestone numbers for later use
+      const newMap = new Map<string, number>();
+      results.forEach(result => {
+        newMap.set(result.phase, result.milestoneNumber);
+      });
+      setMilestoneMap(newMap);
+      setMilestonesCreated(true);
+      
+      toast({
+        title: "Milestones created successfully!",
+        description: `Created ${results.length} milestones in GitHub`,
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to create milestones",
+        description: error instanceof Error ? error.message : "Unknown error",
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingMilestones(false);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Progress Header */}
@@ -101,13 +148,52 @@ const LifecyclePhases = ({ phases, setPhases, onNext, onPrevious }: LifecyclePha
                 Assign roles and review generated issues for each phase
               </CardDescription>
             </div>
-            <div className="text-right">
-              <div className="text-2xl font-bold">{approvedCount}/{phases.length}</div>
-              <div className="text-sm text-indigo-100">Phases Approved</div>
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <div className="text-2xl font-bold">{approvedCount}/{phases.length}</div>
+                <div className="text-sm text-indigo-100">Phases Approved</div>
+              </div>
+              {repository && approvedCount > 0 && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleCreateMilestones}
+                  disabled={isCreatingMilestones || milestonesCreated}
+                  className="bg-white/20 hover:bg-white/30 text-white border-white/30"
+                >
+                  {isCreatingMilestones ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : milestonesCreated ? (
+                    <>
+                      <CheckCircle className="w-4 h-4 mr-2" />
+                      Milestones Created
+                    </>
+                  ) : (
+                    <>
+                      <Milestone className="w-4 h-4 mr-2" />
+                      Create GitHub Milestones
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </CardHeader>
       </Card>
+
+      {/* Milestone Info */}
+      {!repository && approvedCount > 0 && (
+        <Alert>
+          <Milestone className="h-4 w-4" />
+          <AlertDescription>
+            GitHub milestones will be created when you select a repository in the next step.
+            Each approved phase will become a milestone to track your project's progress.
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Phases */}
       <div className="space-y-4">

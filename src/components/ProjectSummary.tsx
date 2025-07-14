@@ -10,7 +10,7 @@ import { ProjectSummary as ProjectSummaryType } from '@/types';
 
 interface ProjectSummaryProps {
   summary: ProjectSummaryType | null;
-  setSummary: (summary: any) => void;
+  setSummary: (summary: ProjectSummaryType) => void;
   onNext: () => void;
 }
 
@@ -22,6 +22,8 @@ const ProjectSummary = ({ summary, setSummary, onNext }: ProjectSummaryProps) =>
       <Card className="max-w-md mx-auto">
         <CardContent className="py-12 text-center">
           <p className="text-gray-600">No project summary available</p>
+          <p className="text-sm text-gray-500 mt-2">Debug: This is ProjectSummary component (Step 1)</p>
+          <p className="text-sm text-gray-500">You should be seeing ParseProduct (Step 0)</p>
         </CardContent>
       </Card>
     );

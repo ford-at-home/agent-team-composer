@@ -71,11 +71,80 @@ export class GitHubService {
   }
 
   /**
+   * Create GitHub milestones from phases
+   */
+  async createMilestones(
+    repository: string,
+    phases: Phase[]
+  ): Promise<{ phase: string; milestoneNumber: number }[]> {
+    // Validate inputs
+    const { owner, repo } = this.parseRepository(repository);
+    this.owner = owner;
+    this.repo = repo;
+
+    // Validate phases
+    const validatedPhases = phases
+      .filter(p => p.approved)
+      .map(phase => PhaseSchema.parse(phase));
+
+    const results = [];
+
+    try {
+      // Check repository access
+      await this.octokit.repos.get({ owner, repo });
+    } catch (error) {
+      throw new Error(`Cannot access repository ${owner}/${repo}. Please check permissions.`);
+    }
+
+    // Create milestones for each phase
+    for (let i = 0; i < validatedPhases.length; i++) {
+      const phase = validatedPhases[i];
+      try {
+        const milestoneResponse = await this.octokit.issues.createMilestone({
+          owner,
+          repo,
+          title: this.sanitizeText(phase.title),
+          description: this.sanitizeText(phase.description),
+          due_on: this.calculateDueDate(i + 1), // Optional: add due dates
+          state: 'open'
+        });
+
+        results.push({
+          phase: phase.title,
+          milestoneNumber: milestoneResponse.data.number
+        });
+      } catch (error) {
+        // Check if milestone already exists
+        const err = error as { status?: number; message?: string };
+        if (err.status === 422 && err.message?.includes('already exists')) {
+          console.warn(`Milestone "${phase.title}" already exists, skipping...`);
+        } else {
+          console.error(`Failed to create milestone: ${phase.title}`, error);
+          throw error;
+        }
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * Calculate due date for milestone (optional)
+   */
+  private calculateDueDate(phaseNumber: number): string | undefined {
+    // Example: each phase gets 2 weeks
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + (phaseNumber * 14));
+    return dueDate.toISOString();
+  }
+
+  /**
    * Create GitHub issues from phases
    */
   async createIssuesFromPhases(
     repository: string,
-    phases: Phase[]
+    phases: Phase[],
+    milestoneMap?: Map<string, number>
   ): Promise<{ phase: string; epicNumber: number; issueCount: number }[]> {
     // Validate inputs
     const { owner, repo } = this.parseRepository(repository);
@@ -114,12 +183,15 @@ export class GitHubService {
         const epicTitle = this.sanitizeText(`[Epic] ${phase.title}`);
         const epicBody = this.createEpicBody(phase);
         
+        const milestoneNumber = milestoneMap?.get(phase.title);
+        
         const epicResponse = await this.octokit.issues.create({
           owner,
           repo,
           title: epicTitle,
           body: epicBody,
-          labels: ['epic', `phase:${phase.id}`]
+          labels: ['epic', `phase:${phase.id}`],
+          milestone: milestoneNumber // Associate epic with milestone
         });
 
         const epicNumber = epicResponse.data.number;
@@ -135,12 +207,15 @@ export class GitHubService {
               `role:${this.sanitizeLabel(issue.role)}`
             ];
 
+            const milestoneNumber = milestoneMap?.get(phase.title);
+            
             await this.octokit.issues.create({
               owner,
               repo,
               title: issueTitle,
               body: issueBody,
-              labels
+              labels,
+              milestone: milestoneNumber // Associate with milestone if available
             });
 
             issueCount++;

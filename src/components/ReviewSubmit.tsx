@@ -4,11 +4,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Github, CheckCircle2, Users, FileText, GitBranch, Zap, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Github, CheckCircle2, Users, FileText, GitBranch, Zap, Loader2, AlertCircle, RefreshCw, Milestone } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { GitHubService } from '@/services/github-service';
 
 interface Phase {
   id: string;
@@ -33,7 +34,7 @@ interface ReviewSubmitProps {
   };
   phases: Phase[];
   onPrevious: () => void;
-  onSubmit?: (phases: Phase[]) => Promise<unknown>;
+  onSubmit?: (phases: Phase[], milestoneMap?: Map<string, number>) => Promise<unknown>;
 }
 
 const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitProps) => {
@@ -48,6 +49,8 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
   const [loadingRepos, setLoadingRepos] = useState(false);
   const [loadingBranches, setLoadingBranches] = useState(false);
   const [repoError, setRepoError] = useState<string | null>(null);
+  const [milestoneMap, setMilestoneMap] = useState<Map<string, number>>(new Map());
+  const [creatingMilestones, setCreatingMilestones] = useState(false);
   const { toast } = useToast();
 
   const approvedPhases = phases.filter(p => p.approved);
@@ -114,6 +117,7 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
+    setCreatingMilestones(true);
     
     const targetBranch = createNewBranch ? newBranchName : selectedBranch;
     const targetRepo = selectedRepo || summary.repository;
@@ -129,24 +133,41 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
     }
     
     try {
-      if (onSubmit) {
-        await onSubmit(phases);
-      }
+      // Step 1: Create milestones
+      const githubService = new GitHubService();
+      const milestoneResults = await githubService.createMilestones(targetRepo, phases);
+      
+      // Store milestone numbers for issue creation
+      const newMilestoneMap = new Map<string, number>();
+      milestoneResults.forEach(result => {
+        newMilestoneMap.set(result.phase, result.milestoneNumber);
+      });
+      setMilestoneMap(newMilestoneMap);
+      setCreatingMilestones(false);
+      
+      toast({
+        title: "Milestones created!",
+        description: `Created ${milestoneResults.length} milestones in GitHub`,
+      });
+      
+      // Step 2: Create issues with milestone associations
+      const issueResults = await githubService.createIssuesFromPhases(targetRepo, phases, newMilestoneMap);
       
       setSubmitted(true);
       
       toast({
         title: "Successfully pushed to GitHub!",
-        description: `Created ${approvedPhases.length} epics and ${totalIssues} issues in ${targetRepo}.`,
+        description: `Created ${milestoneResults.length} milestones, ${approvedPhases.length} epics and ${totalIssues} issues in ${targetRepo}.`,
       });
     } catch (error) {
       toast({
-        title: "Failed to create GitHub issues",
+        title: "Failed to create GitHub resources",
         description: error instanceof Error ? error.message : "Unknown error",
         variant: "destructive",
       });
     } finally {
       setIsSubmitting(false);
+      setCreatingMilestones(false);
     }
   };
 
@@ -166,7 +187,11 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
             </CardDescription>
           </CardHeader>
           <CardContent className="p-8 text-center">
-            <div className="grid grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-4 gap-6 mb-8">
+              <div>
+                <div className="text-3xl font-bold text-indigo-600 mb-1">{milestoneMap.size}</div>
+                <div className="text-sm text-gray-600">Milestones</div>
+              </div>
               <div>
                 <div className="text-3xl font-bold text-green-600 mb-1">{approvedPhases.length}</div>
                 <div className="text-sm text-gray-600">Epics Created</div>
@@ -393,9 +418,12 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
       {/* Approved Phases */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Approved Phases</CardTitle>
+          <CardTitle className="text-lg flex items-center">
+            <Milestone className="w-5 h-5 mr-2" />
+            Approved Phases
+          </CardTitle>
           <CardDescription>
-            These phases will be created as epics in your GitHub repository
+            These phases will be created as milestones and epics in your GitHub repository
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -446,7 +474,7 @@ const ReviewSubmit = ({ summary, phases, onPrevious, onSubmit }: ReviewSubmitPro
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Pushing to GitHub...
+              {creatingMilestones ? 'Creating Milestones...' : 'Creating Issues...'}
             </>
           ) : (
             <>

@@ -4,6 +4,8 @@ import { RobustLLMHandler } from './json-extractor';
 import { PromptSanitizer } from './prompt-sanitizer';
 
 export interface FormFieldSuggestions {
+  title: string;
+  description: string;
   targetUsers: string[];
   techStack: string[];
   features: string[];
@@ -48,6 +50,8 @@ Basic Tech Stack: {basicTechStack}
 
 Provide your analysis in the following JSON format:
 {
+  "title": "Improved project title based on README",
+  "description": "A comprehensive description based on the README content",
   "targetUsers": ["user group 1", "user group 2", ...],
   "techStack": ["technology 1", "technology 2", ...],
   "features": ["feature 1", "feature 2", ...],
@@ -91,6 +95,8 @@ export class AIFormPopulator {
 
     // Define schema for validation
     const FormSuggestionsSchema = z.object({
+      title: z.string(),
+      description: z.string(),
       targetUsers: z.array(z.string()).min(1),
       techStack: z.array(z.string()).min(1),
       features: z.array(z.string()).min(1),
@@ -109,6 +115,8 @@ export class AIFormPopulator {
 
       // Post-process suggestions to ensure quality
       return {
+        title: suggestions.title,
+        description: suggestions.description,
         targetUsers: this.deduplicateAndClean(suggestions.targetUsers),
         techStack: this.deduplicateAndClean(suggestions.techStack),
         features: this.deduplicateAndClean(suggestions.features),
@@ -148,10 +156,14 @@ export class AIFormPopulator {
   }
 
   private getFallbackSuggestions(existingData?: {
+    title?: string;
+    description?: string;
     features?: string[];
     techStack?: string[];
   }): FormFieldSuggestions {
     return {
+      title: existingData?.title || 'Untitled Project',
+      description: existingData?.description || 'A new project',
       targetUsers: ['developers', 'end-users'],
       techStack: existingData?.techStack || ['JavaScript', 'Node.js'],
       features: existingData?.features || ['Core functionality'],

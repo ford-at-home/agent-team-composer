@@ -62,11 +62,11 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
 
   // Auto-populate with AI when component mounts and README is available
   useEffect(() => {
-    if (readmeContent && !initialData?.targetUsers?.length) {
+    if (readmeContent && readmeContent.trim().length > 0) {
+      // Always auto-populate when we have README content
       handleAIPopulate();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [readmeContent]); // handleAIPopulate is stable, initialData check is intentional
+  }, [readmeContent]);
 
   const handleAIPopulate = async () => {
     if (!readmeContent) {
@@ -104,11 +104,13 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
       const suggestions = await response.json();
 
       // Update form with AI suggestions
-      setValue('targetUsers', suggestions.targetUsers);
-      setValue('techStack', suggestions.techStack);
-      setValue('features', suggestions.features);
-      setValue('domain', suggestions.domain);
-      setValue('complexity', suggestions.complexity);
+      if (suggestions.title) setValue('title', suggestions.title);
+      if (suggestions.description) setValue('description', suggestions.description);
+      if (suggestions.targetUsers) setValue('targetUsers', suggestions.targetUsers);
+      if (suggestions.techStack) setValue('techStack', suggestions.techStack);
+      if (suggestions.features) setValue('features', suggestions.features);
+      if (suggestions.domain) setValue('domain', suggestions.domain);
+      if (suggestions.complexity) setValue('complexity', suggestions.complexity);
 
       toast({
         title: "AI suggestions applied",
@@ -178,26 +180,12 @@ const ParseProduct = ({ readmeContent = '', initialData, onNext }: ParseProductP
                 Review and edit the detected project information
               </CardDescription>
             </div>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              onClick={handleAIPopulate}
-              disabled={isLoadingAI || !readmeContent}
-              className="bg-white/20 hover:bg-white/30 text-white border-white/30"
-            >
-              {isLoadingAI ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Analyzing...
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  AI Populate
-                </>
-              )}
-            </Button>
+            {isLoadingAI && (
+              <div className="flex items-center text-white">
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                <span className="text-sm">Analyzing README...</span>
+              </div>
+            )}
           </div>
         </CardHeader>
       </Card>
