@@ -19,6 +19,7 @@ const Index = () => {
   const [projectSummary, setProjectSummary] = useState<ProjectSummaryType | null>(null);
   const [phases, setPhases] = useState<Phase[]>([]);
   const [readmeContent, setReadmeContent] = useState<string>('');
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false);
   const [parsedMetadata, setParsedMetadata] = useState<{
     title: string;
     description: string;
@@ -120,34 +121,69 @@ const Index = () => {
       );
     }
 
-    if (!projectSummary || phases.length === 0) {
-      return (
-        <Card className="max-w-md mx-auto">
-          <CardContent className="py-12">
-            <p className="text-gray-600 text-center">No project data available</p>
-          </CardContent>
-        </Card>
-      );
-    }
-
     switch (currentStep) {
       case 0:
         return (
           <ParseProduct
             readmeContent={readmeContent}
             initialData={parsedMetadata}
-            onNext={(data) => {
+            onNext={async (data) => {
               setParsedMetadata(data);
-              // Update project summary with parsed data
-              if (projectSummary) {
-                setProjectSummary({
-                  ...projectSummary,
+              setIsGeneratingPlan(true);
+              
+              // Generate project plan with the form data
+              try {
+                const response = await fetch('/api/generate-plan', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    metadata: data,
+                    readmeContent: readmeContent
+                  }),
+                });
+
+                if (!response.ok) {
+                  throw new Error('Failed to generate project plan');
+                }
+
+                const projectPlan = await response.json();
+                
+                // Update state with the generated plan including all form fields
+                setProjectSummary(projectPlan.summary || {
                   title: data.title,
                   description: data.description,
-                  domain: data.domain
+                  domain: data.domain,
+                  targetUsers: data.targetUsers,
+                  techStack: data.techStack,
+                  features: data.features,
+                  complexity: data.complexity,
+                  objectives: []
                 });
+                setPhases(projectPlan.phases || []);
+                
+                // Update the project data hook
+                updateProjectData(projectPlan);
+                
+                handleNext();
+              } catch (error) {
+                console.error('Failed to generate project plan:', error);
+                // Still move forward with basic data
+                setProjectSummary({
+                  title: data.title,
+                  description: data.description,
+                  domain: data.domain,
+                  targetUsers: data.targetUsers,
+                  techStack: data.techStack,
+                  features: data.features,
+                  complexity: data.complexity,
+                  objectives: []
+                });
+                handleNext();
+              } finally {
+                setIsGeneratingPlan(false);
               }
-              handleNext();
             }}
           />
         );
@@ -193,6 +229,21 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
+      {/* Loading Overlay */}
+      {isGeneratingPlan && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center">
+          <Card className="max-w-md mx-auto">
+            <CardContent className="flex flex-col items-center justify-center py-12 px-8">
+              <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Generating Project Plan</h3>
+              <p className="text-gray-600 text-center">
+                Analyzing your project requirements and creating a comprehensive delivery plan...
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Header */}
       <header className="border-b bg-white/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-6 py-4">

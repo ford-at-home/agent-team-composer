@@ -2,8 +2,13 @@ export interface ProjectSummary {
   title: string;
   description: string;
   domain: string;
-  repository: string;
-  branch: string;
+  repository?: string;
+  branch?: string;
+  targetUsers?: string[];
+  techStack?: string[];
+  features?: string[];
+  complexity?: 'simple' | 'moderate' | 'complex';
+  objectives?: string[];
 }
 
 export interface Issue {

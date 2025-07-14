@@ -57,7 +57,11 @@ export class LLMOrchestrator {
             description: projectInfo.description,
             domain: projectInfo.domain,
             repository: '',  // These will be filled by UI
-            branch: ''
+            branch: '',
+            targetUsers: projectInfo.targetUsers,
+            techStack: projectInfo.techStack,
+            features: projectInfo.features,
+            complexity: projectInfo.complexity as 'simple' | 'moderate' | 'complex'
           },
           phases: cachedProgress.finalPhases
         };
@@ -101,7 +105,11 @@ export class LLMOrchestrator {
         description: projectInfo.description,
         domain: projectInfo.domain,
         repository: 'unknown/unknown', // Will be set by CLI
-        branch: 'main'
+        branch: 'main',
+        targetUsers: projectInfo.targetUsers,
+        techStack: projectInfo.techStack,
+        features: projectInfo.features,
+        complexity: projectInfo.complexity as 'simple' | 'moderate' | 'complex'
       },
       phases: formattedPhases
     };

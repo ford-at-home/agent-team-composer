@@ -1,0 +1,9 @@
+{
+  "version": "v1",
+  "packages": {
+    "agent-team-composer": {
+      "signature": "1bb8921aa94612b25f9716a77afce833",
+      "file": true
+    }
+  }
+}
