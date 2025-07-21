@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import ProgressBar from '@/components/ui/progress-bar';
+import { Progress } from '@/components/ui/progress';
 
 interface Phase {
   id: string;
@@ -205,13 +205,13 @@ const LifecyclePhases = ({ phases, setPhases, onNext, onPrevious, repository }: 
               </p>
               
               {milestoneCreationProgress && (
-                <div className="w-full">
-                  <ProgressBar 
-                    current={milestoneCreationProgress.current}
-                    total={milestoneCreationProgress.total}
-                    title={milestoneCreationProgress.status}
-                    showNumbers={true}
-                    animated={true}
+                <div className="w-full space-y-2">
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>{milestoneCreationProgress.status}</span>
+                    <span>{milestoneCreationProgress.current} / {milestoneCreationProgress.total}</span>
+                  </div>
+                  <Progress 
+                    value={(milestoneCreationProgress.current / milestoneCreationProgress.total) * 100}
                   />
                 </div>
               )}
