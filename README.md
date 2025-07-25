@@ -1,245 +1,173 @@
-# Agent Team Composer
+# GitHub Backlog Generator 🚀
 
-<div align="center">
+> Transform any GitHub repository README into a structured project backlog with AI-powered analysis
 
-![NPM Version](https://img.shields.io/npm/v/agent-team-composer.svg)
+[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PyPI Version](https://img.shields.io/pypi/v/github-backlog-generator.svg)](https://pypi.org/project/github-backlog-generator/)
 
-Transform any README.md into a comprehensive GitHub project plan with AI-powered agent teams optimized for Claude Flow SPARC methodology.
+## 🎯 What is GitHub Backlog Generator?
 
-</div>
+GitHub Backlog Generator is a powerful CLI tool that analyzes any GitHub repository's README and automatically generates a complete project backlog with:
 
-## 🚀 Quick Start
+- **📅 Milestones**: Organized project phases with timelines
+- **📋 Epics**: High-level feature groupings with team composition
+- **✅ Tasks**: Detailed, actionable items with role assignments
+- **🏷️ Labels**: Automatic categorization for better organization
 
-```bash
-npx agent-team-composer init
-```
+All generated content is created directly in your GitHub repository, ready for your team to start working!
 
-That's it! The tool will:
+## ✨ Features
 
-1. Read your project's README.md
-2. Use Claude AI to generate a complete project plan
-3. Launch a localhost UI for review and editing
-4. Push approved plans to GitHub as issues and epics
-
-## 📋 Prerequisites
-
-- Node.js 18+ (required for ES modules support)
-- GitHub repository with a README.md
-- Anthropic API key
-- GitHub CLI (optional, for enhanced features)
+- **🔗 GitHub Integration**: Works with any public or private GitHub repository
+- **🤖 AI-Powered Analysis**: Uses Claude to understand project context and requirements
+- **📊 8-Phase Lifecycle**: Covers the complete software development lifecycle
+- **👥 Team Composition**: Suggests optimal team roles for each phase
+- **🔄 Smart Dependencies**: Creates linked issues with proper relationships
+- **💾 Export Options**: Save generated plans as JSON for review
+- **🧪 Dry Run Mode**: Preview before creating GitHub issues
 
 ## 📦 Installation
 
-| Method                | Command                               |
-| --------------------- | ------------------------------------- |
-| **npx** (recommended) | `npx agent-team-composer init`        |
-| **npm** (global)      | `npm install -g agent-team-composer`  |
-| **yarn** (global)     | `yarn global add agent-team-composer` |
-
-## 🌟 Features
-
-<table>
-<tr>
-<td align="center" width="33%">
-
-### 🤖 AI-Powered
-
-Uses Claude to generate project-specific phases, epics, and issues
-
-</td>
-<td align="center" width="33%">
-
-### 🎯 SPARC Ready
-
-Issues formatted for autonomous agent execution
-
-</td>
-<td align="center" width="33%">
-
-### 🔗 GitHub Native
-
-Creates epics, issues, milestones, and labels
-
-</td>
-</tr>
-<tr>
-<td align="center" width="33%">
-
-### 📝 Smart Parsing
-
-Automatically extracts project info from README
-
-</td>
-<td align="center" width="33%">
-
-### 🎨 Interactive UI
-
-5-step wizard to review and edit everything
-
-</td>
-<td align="center" width="33%">
-
-### ⚙️ Customizable
-
-Edit phases, roles, and issues to match needs
-
-</td>
-</tr>
-</table>
-
-## 🎯 How It Works
-
-1. **Parse Product**: Analyzes your README and extracts project metadata
-2. **Sprint View**: AI generates 3-8 development phases based on your project
-3. **Epic View**: Breaks down each phase into epics with role assignments
-4. **Issues View**: Creates detailed issues for each epic with SPARC formatting
-5. **GitHub Sync**: Select repository/branch and push everything to GitHub
-
-## 🛠️ Configuration
-
-Set your Anthropic API key:
+### From PyPI (Recommended)
 
 ```bash
-export ANTHROPIC_API_KEY=your-api-key
+pip install github-backlog-generator
 ```
 
-Optional: Configure GitHub token for enhanced features:
+### From Source
 
 ```bash
-export GITHUB_TOKEN=ghp_your-token
+# Clone the repository
+git clone https://github.com/ford-at-home/agent-team-composer.git
+cd agent-team-composer
+
+# Install the package
+pip install ./github-backlog-generator
 ```
 
-## 📖 Command Options
+## 🚀 Quick Start
 
+1. **Set up your API keys**:
+   ```bash
+   export ANTHROPIC_API_KEY="your-anthropic-api-key"
+   export GITHUB_TOKEN="your-github-token-with-repo-scope"
+   ```
+
+2. **Generate a backlog**:
+   ```bash
+   github-backlog generate https://github.com/owner/repo
+   ```
+
+3. **Choose a phase** when prompted (1-8)
+
+4. **Review and confirm** the generated plan
+
+That's it! Check your GitHub repository for the newly created milestone, epic, and task issues.
+
+## 📋 Available Phases
+
+The tool generates backlogs for 8 standard development phases:
+
+1. **Discovery & Planning** - Requirements gathering and feasibility
+2. **Design & Architecture** - System design and technical planning  
+3. **Development Setup** - Environment and tooling configuration
+4. **Core Development** - Main feature implementation
+5. **Testing & QA** - Quality assurance and testing
+6. **Documentation** - User and technical documentation
+7. **Deployment** - Production deployment and DevOps
+8. **Maintenance & Growth** - Ongoing improvements and scaling
+
+## 🛠️ Advanced Usage
+
+### Dry Run Mode
+Preview the generated content without creating GitHub issues:
 ```bash
-agent-team-composer init [options]
-
-Options:
-  -p, --port <port>        Port for localhost UI (default: 3000)
-  -r, --readme <path>      Path to README.md (default: README.md)
-  --skip-gh-check          Skip GitHub CLI verification
-  -h, --help               Display help
+github-backlog generate https://github.com/owner/repo --dry-run
 ```
 
-## 🤖 SPARC Agent Integration
-
-Generated issues include:
-
-- Role assignments for autonomous agents
-- Structured markdown with clear deliverables
-- Dependency mapping between tasks
-- Labels: `sparc-enabled:true`, `role:<persona>`, `phase:<phase>`
-- Execution hints for parallel vs sequential work
-
-## 📊 Example Output
-
-| Metric         | Typical Output                           |
-| -------------- | ---------------------------------------- |
-| **Phases**     | 8 phases from Discovery to Enhancement   |
-| **Issues**     | 20+ detailed tasks with role assignments |
-| **Roles**      | 10+ specialized agent personas           |
-| **Milestones** | Sprint markers with timelines            |
-| **Labels**     | Auto-generated for agents and phases     |
-
-## 🐛 Troubleshooting
-
-### Missing Anthropic API Key
-
+### Export to JSON
+Save the generated phase for later use:
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-api...
+github-backlog generate https://github.com/owner/repo --output phase.json
 ```
 
-### GitHub Authentication Issues
-
+### Process from JSON
+Create GitHub issues from a previously exported phase:
 ```bash
-# Option 1: Use GitHub CLI
-gh auth login
-
-# Option 2: Use token
-export GITHUB_TOKEN=ghp_...
+github-backlog process phase.json --repo owner/repo
 ```
 
-### Port Already in Use
-
+### Specify Phase Directly
+Skip the interactive prompt:
 ```bash
-agent-team-composer init --port 4000
+github-backlog generate https://github.com/owner/repo --phase 3
 ```
 
-## 🚀 Release Process
+## 🔧 Configuration
 
-See [docs/RELEASE_WORKFLOW.md](docs/RELEASE_WORKFLOW.md) for detailed release instructions.
+### Environment Variables
 
-### Automatic Releases
+- `ANTHROPIC_API_KEY` - Your Anthropic API key for Claude
+- `GITHUB_TOKEN` - GitHub personal access token with `repo` scope
+- `GITHUB_BACKLOG_MODEL` - Claude model to use (default: `claude-3-5-sonnet-20241022`)
 
-Every PR merged to main automatically triggers a release! Version is determined by PR labels:
+### GitHub Token Permissions
 
-- `feature` → Minor version bump (new features)
-- `breaking-change` → Major version bump
-- No label → Patch version bump (bug fixes)
-- `skip-release` → No release
+Your GitHub token needs the following scopes:
+- `repo` - Full repository access (for creating issues and milestones)
+- `read:org` - Read organization data (optional, for org repos)
 
-### Manual Releases
+## 📚 How It Works
 
-1. **Create Release PR**: Actions → "Create Release PR" → Choose version → Run
-2. **Direct Publish**: Actions → "Publish to NPM" → Choose version → Run
-
-### Setup NPM Publishing
-
-To enable automated NPM publishing:
-
-1. Create NPM access token at https://www.npmjs.com/
-2. Add to GitHub: Settings → Secrets → Actions → New repository secret
-   - Name: `NPM_TOKEN`
-   - Value: Your NPM access token
+1. **Fetch**: Downloads and analyzes the repository README
+2. **Analyze**: AI extracts project context, tech stack, and complexity
+3. **Generate**: Creates structured phase plan with epics and tasks
+4. **Validate**: Ensures all generated content meets format requirements
+5. **Create**: Posts milestone, epic issue, and task issues to GitHub
 
 ## 🤝 Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+We welcome contributions! See our [Contributing Guide](github-backlog-generator/CONTRIBUTING.md) for details.
 
 ### Development Setup
 
 ```bash
-# Clone and install
-git clone https://github.com/ford-at-home/agent-team-composer
-cd agent-team-composer
-npm install
+# Clone the repo
+git clone https://github.com/ford-at-home/agent-team-composer.git
+cd agent-team-composer/github-backlog-generator
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install in development mode
+pip install -e .
+pip install -r requirements-dev.txt
 
 # Run tests
-npm run test
-npm run build:npm
-npm run test:build
-
-# Test locally
-npm link
-agent-team-composer init
+pytest
 ```
-
-## 🏆 Contributors
-
-<a href="https://github.com/ford-at-home/agent-team-composer/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ford-at-home/agent-team-composer" />
-</a>
-
-## 📈 Stats
-
-[![GitHub Stars](https://img.shields.io/github/stars/ford-at-home/agent-team-composer?style=social)](https://github.com/ford-at-home/agent-team-composer)
-[![GitHub Forks](https://img.shields.io/github/forks/ford-at-home/agent-team-composer?style=social)](https://github.com/ford-at-home/agent-team-composer)
-[![GitHub Issues](https://img.shields.io/github/issues/ford-at-home/agent-team-composer?style=flat-square)](https://github.com/ford-at-home/agent-team-composer/issues)
-[![GitHub PRs](https://img.shields.io/github/issues-pr/ford-at-home/agent-team-composer?style=flat-square)](https://github.com/ford-at-home/agent-team-composer/pulls)
 
 ## 📄 License
 
-MIT © Agent Team Composer Contributors
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- Built with [Claude](https://www.anthropic.com/claude) by Anthropic
+- Uses [PyGithub](https://github.com/PyGithub/PyGithub) for GitHub API interaction
+- CLI powered by [Click](https://click.palletsprojects.com/)
+- Beautiful terminal output with [Rich](https://github.com/Textualize/rich)
+
+## 📮 Support
+
+- 📧 Email: ford@flyingpig.ai
+- 🐛 Issues: [GitHub Issues](https://github.com/ford-at-home/agent-team-composer/issues)
+- 💬 Discussions: [GitHub Discussions](https://github.com/ford-at-home/agent-team-composer/discussions)
 
 ---
 
-<div align="center">
-  <strong>Built with ❤️ for the Claude Flow SPARC community</strong>
-  
-  <br />
-  
-  <a href="https://www.npmjs.com/package/agent-team-composer">NPM</a> •
-  <a href="https://github.com/ford-at-home/agent-team-composer">GitHub</a> •
-  <a href="https://github.com/ford-at-home/agent-team-composer/issues">Issues</a> •
-  <a href="https://github.com/ford-at-home/agent-team-composer/blob/main/CONTRIBUTING.md">Contributing</a>
-</div>
+<p align="center">
+  Made with ❤️ by the GitHub Backlog Generator team
+</p>

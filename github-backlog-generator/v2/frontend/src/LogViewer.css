@@ -1,0 +1,277 @@
+/* LogViewer Component Styles */
+.log-viewer {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 400px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Header */
+.log-header {
+  background: #2d2d2d;
+  padding: 12px 16px;
+  border-bottom: 1px solid #3e3e3e;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.log-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.log-title h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Status indicators */
+.status {
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.status.provisioning {
+  color: #dcdcaa;
+}
+
+.status.streaming {
+  color: #4ec9b0;
+}
+
+.status.complete {
+  color: #b5cea8;
+}
+
+.status.failed {
+  color: #f44747;
+}
+
+.status.error {
+  color: #f48771;
+}
+
+/* Controls */
+.log-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.filter-input {
+  background: #3c3c3c;
+  border: 1px solid #3e3e3e;
+  color: #d4d4d4;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  width: 200px;
+  transition: all 0.2s;
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: #007acc;
+  background: #403f3f;
+}
+
+.filter-input::placeholder {
+  color: #808080;
+}
+
+button {
+  background: #0e639c;
+  color: white;
+  border: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 500;
+}
+
+button:hover {
+  background: #1177bb;
+}
+
+button:active {
+  background: #0d5a8f;
+}
+
+.copy-button,
+.download-button {
+  min-width: 80px;
+}
+
+/* Log container */
+.log-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.6;
+  background: #1e1e1e;
+}
+
+/* Custom scrollbar */
+.log-container::-webkit-scrollbar {
+  width: 12px;
+}
+
+.log-container::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+  background: #424242;
+  border-radius: 6px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+  background: #4e4e4e;
+}
+
+/* Log entries */
+.log-entry {
+  margin-bottom: 4px;
+  display: flex;
+  gap: 12px;
+  word-break: break-word;
+}
+
+.log-entry:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.timestamp {
+  color: #608b4e;
+  white-space: nowrap;
+  flex-shrink: 0;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.message {
+  color: #d4d4d4;
+  white-space: pre-wrap;
+  flex: 1;
+}
+
+/* Highlight filter matches */
+.message mark {
+  background: #515c6a;
+  color: #d4d4d4;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* Empty state */
+.log-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #808080;
+  font-style: italic;
+}
+
+/* Footer */
+.log-footer {
+  background: #2d2d2d;
+  padding: 8px 16px;
+  border-top: 1px solid #3e3e3e;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #808080;
+}
+
+.log-stats {
+  display: flex;
+  gap: 8px;
+}
+
+.auto-scroll-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .log-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .log-controls {
+    flex-wrap: wrap;
+  }
+  
+  .filter-input {
+    width: 100%;
+  }
+  
+  .log-entry {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .timestamp {
+    opacity: 0.6;
+  }
+}
+
+/* Dark theme adjustments for embedding */
+.log-viewer.light-theme {
+  background: #ffffff;
+  color: #333333;
+}
+
+.log-viewer.light-theme .log-header,
+.log-viewer.light-theme .log-footer {
+  background: #f3f3f3;
+  border-color: #e0e0e0;
+}
+
+.log-viewer.light-theme .log-container {
+  background: #ffffff;
+}
+
+.log-viewer.light-theme .filter-input {
+  background: #ffffff;
+  border-color: #e0e0e0;
+  color: #333333;
+}
+
+.log-viewer.light-theme .timestamp {
+  color: #008000;
+}
+
+.log-viewer.light-theme .message {
+  color: #333333;
+}
+
+.log-viewer.light-theme .message mark {
+  background: #ffeb3b;
+  color: #333333;
+}

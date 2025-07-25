@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "github-backlog-generator"
 version = "1.0.0"
 authors = [
-    {name = "William Prior", email = "your.email@example.com"},  # TODO: Replace with your email
+    {name = "Ford", email = "ford@flyingpig.ai"},
 ]
 description = "CLI tool to transform GitHub repo READMEs into ordered project backlogs"
 readme = "README.md"
@@ -39,10 +39,10 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/github-backlog-generator"
-"Bug Tracker" = "https://github.com/yourusername/github-backlog-generator/issues"
-Repository = "https://github.com/yourusername/github-backlog-generator"
-Documentation = "https://github.com/yourusername/github-backlog-generator#readme"
+Homepage = "https://github.com/ford-at-home/agent-team-composer"
+"Bug Tracker" = "https://github.com/ford-at-home/agent-team-composer/issues"
+Repository = "https://github.com/ford-at-home/agent-team-composer"
+Documentation = "https://github.com/ford-at-home/agent-team-composer/tree/main/github-backlog-generator#readme"
 
 [project.scripts]
 github-backlog = "github_backlog_generator.cli:main"

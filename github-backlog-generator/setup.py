@@ -7,12 +7,12 @@ with open("README.md", "r", encoding="utf-8") as fh:
 setup(
     name="github-backlog-generator",
     version="1.0.0",
-    author="William Prior",
-    author_email="your.email@example.com",  # TODO: Replace with your email
+    author="Ford",
+    author_email="ford@flyingpig.ai",
     description="CLI tool to transform GitHub repo READMEs into ordered project backlogs",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/github-backlog-generator",  # TODO: Replace with your GitHub URL
+    url="https://github.com/ford-at-home/agent-team-composer",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     classifiers=[
@@ -47,7 +47,7 @@ setup(
     },
     keywords="github backlog project-management cli developer-tools",
     project_urls={
-        "Bug Reports": "https://github.com/yourusername/github-backlog-generator/issues",
-        "Source": "https://github.com/yourusername/github-backlog-generator",
+        "Bug Reports": "https://github.com/ford-at-home/agent-team-composer/issues",
+        "Source": "https://github.com/ford-at-home/agent-team-composer",
     },
 )
