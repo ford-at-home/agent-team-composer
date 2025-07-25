@@ -122,13 +122,17 @@ python run.py https://github.com/owner/repo
 ### Command Options
 
 ```bash
+# Create milestones only (new command)
+github-backlog milestones [OPTIONS] REPO_URL
+
+# Generate content
 github-backlog generate [OPTIONS] REPO_URL
 
 Options:
-  --phase INTEGER     Skip selection and generate specific phase (1-10)
+  --all-phases       Generate all 8 phases instead of just one
+  --phase INTEGER    Skip selection and generate specific phase (1-8)
   --dry-run          Preview without creating GitHub issues
   --output PATH      Save generated plan to JSON file
-  --no-issues        Create milestone only, skip epic/task creation
   --api-key TEXT     Override Anthropic API key
   --github-token TEXT Override GitHub token
   --help             Show help message
@@ -137,17 +141,22 @@ Options:
 ### Examples
 
 ```bash
+# RECOMMENDED: Two-step workflow for new projects
+# Step 1: Create all milestones
+github-backlog milestones https://github.com/owner/repo
+
+# Step 2: Populate all milestones with content
+github-backlog generate --all-phases https://github.com/owner/repo
+
+# OR populate specific phases one at a time
+github-backlog generate --phase 1 https://github.com/owner/repo
+github-backlog generate --phase 2 https://github.com/owner/repo
+
 # Preview phase 1 without creating issues (dry run)
 github-backlog generate https://github.com/facebook/react --phase 1 --dry-run
 
 # Generate phase 2 and save to file
 github-backlog generate owner/repo --phase 2 --output phase2.json
-
-# Create only the milestone, no issues
-github-backlog generate owner/repo --no-issues
-
-# Process a previously saved phase file
-github-backlog process phase2.json --repo owner/repo
 ```
 
 ## 📋 What Gets Created?
@@ -192,10 +201,23 @@ Each epic gets 3-7 task issues:
 - **Overconfidence**: Adds 50% buffer to complex technical tasks
 - **Tunnel Vision**: Considers ripple effects and dependencies
 
-## 🔄 Workflow Example
+## 🔄 Workflow Examples
 
+### Option 1: Create Everything at Once (Original)
 ```bash
-# 1. Generate phase 1 (Research)
+# Generate all phases with milestones and issues
+github-backlog generate mycompany/new-project --all-phases
+```
+
+### Option 2: Two-Step Process (Recommended)
+```bash
+# 1. Create all milestones first (instant)
+github-backlog milestones mycompany/new-project
+
+# 2. Review milestones on GitHub, then populate them
+github-backlog generate mycompany/new-project --all-phases
+
+# OR populate incrementally
 github-backlog generate mycompany/new-project --phase 1
 
 # 2. After research is complete, generate phase 2 (Planning)

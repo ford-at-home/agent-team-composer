@@ -43,7 +43,8 @@ STANDARD_PHASES = [
 @click.option('--dry-run', is_flag=True, help='Generate phase without creating milestone')
 @click.option('--output', '-o', help='Save phase to JSON file')
 @click.option('--all-phases', is_flag=True, help='Create all 8 phases instead of just one')
-def main(repo_url: str, api_key: str, github_token: str, dry_run: bool, output: str, all_phases: bool):
+@click.option('--phase', '-p', type=int, help='Specific phase number to generate (1-8)')
+def main(repo_url: str, api_key: str, github_token: str, dry_run: bool, output: str, all_phases: bool, phase: int):
     """Generate a project milestone from a GitHub repository's README.
     
     REPO_URL: GitHub repository URL (e.g., https://github.com/owner/repo or owner/repo)
@@ -164,6 +165,14 @@ def main(repo_url: str, api_key: str, github_token: str, dry_run: bool, output: 
             if confirm.lower() != 'yes':
                 console.print("Aborted.")
                 sys.exit(0)
+    elif phase:
+        # Specific phase requested via command line
+        if 1 <= phase <= 8:
+            phases_to_create = [phase]
+            console.print(f"[green]Selected:[/green] Phase {phase} - {STANDARD_PHASES[phase - 1]}")
+        else:
+            console.print(f"[red]Error: Phase must be between 1 and 8[/red]")
+            sys.exit(1)
     else:
         # Display phases and ask for selection
         console.print("[bold]Select a phase to generate:[/bold]\n")
@@ -198,8 +207,45 @@ def main(repo_url: str, api_key: str, github_token: str, dry_run: bool, output: 
         8: "This phase covers documentation, training materials, and go-to-market activities for the launch."
     }
     
+    # Initialize milestone_mapping for single phase mode
+    milestone_mapping = {}
+    
     # Track overall progress
     total_phases = len(phases_to_create)
+    
+    # NEW WORKFLOW: When --all-phases is used, create all milestones first
+    if all_phases and not dry_run and github_client:
+        console.print("\n[bold cyan]Step 1: Creating all milestones first...[/bold cyan]\n")
+        
+        milestone_mapping = {}  # phase_num -> milestone_number
+        
+        with console.status("[bold green]Creating milestones...") as status:
+            for phase_num in phases_to_create:
+                selected_phase = STANDARD_PHASES[phase_num - 1]
+                phase_description = phase_descriptions.get(phase_num, "")
+                
+                try:
+                    # Create milestone with phase data
+                    phase_data = {
+                        'id': f'phase-{phase_num}',
+                        'title': selected_phase,
+                        'description': phase_description,
+                        'dueDate': (datetime.now() + timedelta(days=phase_num * 14)).isoformat()
+                    }
+                    
+                    milestone_urls = github_client.create_milestones(owner, repo_name, [phase_data])
+                    console.print(f"[green]✓[/green] Milestone {phase_num}: {selected_phase}")
+                    
+                    # Extract milestone number from URL
+                    milestone_match = re.search(r'/milestone/(\d+)$', milestone_urls[0])
+                    if milestone_match:
+                        milestone_mapping[phase_num] = int(milestone_match.group(1))
+                    
+                except Exception as e:
+                    console.print(f"[red]✗[/red] Failed to create milestone {phase_num}: {e}")
+        
+        console.print(f"\n[green]✓[/green] Created {len(milestone_mapping)} milestones successfully!")
+        console.print("\n[bold cyan]Step 2: Populating milestones with epics and issues...[/bold cyan]")
     
     # Process each phase
     for phase_idx, phase_num in enumerate(phases_to_create, 1):
@@ -272,32 +318,46 @@ def main(repo_url: str, api_key: str, github_token: str, dry_run: bool, output: 
         
         # Create milestone in GitHub (if not dry run)
         if not dry_run and github_client:
-            if all_phases:
-                console.print(f"\n[bold]Creating Phase {phase_num} in GitHub...[/bold]")
+            # For all-phases mode, milestone already exists
+            if all_phases and phase_num in milestone_mapping:
+                console.print(f"\n[bold]Populating Phase {phase_num}: {selected_phase}[/bold]")
+                milestone_number = milestone_mapping[phase_num]
             else:
+                # Single phase mode - create milestone now
                 console.print("\n[bold]Creating Complete Backlog in GitHub:[/bold]")
                 console.print("[dim]This will create: 1 milestone, ~5-10 epics, ~5-10 tasks per epic[/dim]\n")
+                
+                with console.status("[bold green]Creating milestone...") as status:
+                    try:
+                        # Create milestone with phase data
+                        phase_data = {
+                            'id': f'phase-{phase_num}',
+                            'title': selected_phase,
+                            'description': phase_description,
+                            'dueDate': (datetime.now() + timedelta(days=phase_num * 14)).isoformat()
+                        }
+                        
+                        milestone_urls = github_client.create_milestones(owner, repo_name, [phase_data])
+                        console.print(f"[green]✓[/green] Milestone created successfully!\n")
+                        
+                        for url in milestone_urls:
+                            console.print(f"  • {url}")
+                        
+                        # Extract milestone number from URL
+                        milestone_match = re.search(r'/milestone/(\d+)$', milestone_urls[0])
+                        if milestone_match:
+                            milestone_number = int(milestone_match.group(1))
+                        else:
+                            raise Exception("Could not extract milestone number")
+                    except Exception as e:
+                        console.print(f"[red]Error creating milestone: {e}[/red]")
+                        console.print("\nPhase was generated successfully but milestone could not be created.")
+                        console.print("You can save the phase with --output and create milestone manually.")
+                        sys.exit(1)
             
-            with console.status("[bold green]Creating milestone...") as status:
-                try:
-                    # Create milestone with phase data
-                    phase_data = {
-                        'id': f'phase-{phase_num}',
-                        'title': selected_phase,
-                        'description': phase_description,
-                        'dueDate': (datetime.now() + timedelta(days=phase_num * 14)).isoformat()
-                    }
-                    
-                    milestone_urls = github_client.create_milestones(owner, repo_name, [phase_data])
-                    console.print(f"[green]✓[/green] Milestone created successfully!\n")
-                    
-                    for url in milestone_urls:
-                        console.print(f"  • {url}")
-                    
-                    # Extract milestone number from URL
-                    milestone_match = re.search(r'/milestone/(\d+)$', milestone_urls[0])
-                    if milestone_match:
-                        milestone_number = int(milestone_match.group(1))
+            # Now create epics and tasks for this milestone
+            with console.status(f"[bold green]Creating content for Phase {phase_num}...") as status:
+                if 'milestone_number' in locals():
                         
                         # Create epic issues
                         status.update("Creating epic issues...")
@@ -365,16 +425,6 @@ def main(repo_url: str, api_key: str, github_token: str, dry_run: bool, output: 
                         console.print(f"  • 1 milestone")
                         console.print(f"  • {len(created_epics)} epics") 
                         console.print(f"  • ~{total_tasks} tasks (across all epics)")
-                    
-                except Exception as e:
-                    console.print(f"[red]Error creating milestone: {e}[/red]")
-                    if all_phases:
-                        console.print("Continuing with next phase...")
-                        continue
-                    else:
-                        console.print("\nPhase was generated successfully but milestone could not be created.")
-                        console.print("You can save the phase with --output and create milestone manually.")
-                        sys.exit(1)
     
     # Final summary for all phases
     if all_phases and not dry_run and github_client:
