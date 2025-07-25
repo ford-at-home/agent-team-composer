@@ -24,6 +24,36 @@ from .github_client import GitHubClient
 
 console = Console()
 
+
+def resolve_phase_id(phase_input: str, available_phases: List[Dict[str, Any]]) -> int:
+    """Resolve phase input to phase number based on available phases."""
+    if not phase_input.isdigit():
+        # Show available phases
+        phase_list = [f"{i}. {phase['title']}" for i, phase in enumerate(available_phases, 1)]
+        raise click.BadParameter(f"Phase must be a number. Available phases:\n" + "\n".join(phase_list))
+    
+    phase_num = int(phase_input)
+    if 1 <= phase_num <= len(available_phases):
+        return phase_num
+    else:
+        phase_list = [f"{i}. {phase['title']}" for i, phase in enumerate(available_phases, 1)]
+        raise click.BadParameter(f"Phase number must be between 1 and {len(available_phases)}. Available phases:\n" + "\n".join(phase_list))
+
+
+def resolve_epic_id(epic_input: str, available_epics: List[Dict[str, Any]]) -> int:
+    """Resolve epic input to epic number based on available epics."""
+    if not epic_input.isdigit():
+        # Show available epics
+        epic_list = [f"{i}. {epic.get('title', f'Epic {i}')}" for i, epic in enumerate(available_epics, 1)]
+        raise click.BadParameter(f"Epic must be a number. Available epics:\n" + "\n".join(epic_list))
+    
+    epic_num = int(epic_input)
+    if 1 <= epic_num <= len(available_epics):
+        return epic_num
+    else:
+        epic_list = [f"{i}. {epic.get('title', f'Epic {i}')}" for i, epic in enumerate(available_epics, 1)]
+        raise click.BadParameter(f"Epic number must be between 1 and {len(available_epics)}. Available epics:\n" + "\n".join(epic_list))
+
 # Define the 8 standard phases
 STANDARD_PHASES = [
     "Discovery & Requirements",
@@ -35,6 +65,7 @@ STANDARD_PHASES = [
     "Deployment & Distribution",
     "Launch & Documentation"
 ]
+
 
 # Phase descriptions
 PHASE_DESCRIPTIONS = {
@@ -398,29 +429,24 @@ def milestones(repo_url: str, github_token: str, dry_run: bool):
 @click.argument('repo_url')
 @click.option('--api-key', envvar='ANTHROPIC_API_KEY', help='Anthropic API key')
 @click.option('--github-token', envvar='GITHUB_TOKEN', help='GitHub personal access token')
-@click.option('--phase', '-p', type=int, required=True, help='Phase number (1-8)')
-@click.option('--epic', '-e', type=int, help='Epic number (if specified, generates issues)')
+@click.option('--phase', '-p', type=str, required=True, help='Phase number (run without --phase to see available phases)')
+@click.option('--epic', '-e', type=str, help='Epic number (run without --epic to see available epics)')
 @click.option('--dry-run', is_flag=True, help='Generate without creating GitHub items')
 @click.option('--all-epics', is_flag=True, help='Generate issues for all epics in the phase')
-def generate(repo_url: str, api_key: str, github_token: str, phase: int, epic: Optional[int], 
+def generate(repo_url: str, api_key: str, github_token: str, phase: str, epic: Optional[str], 
             dry_run: bool, all_epics: bool):
     """Generate epics for a phase or issues for an epic.
     
     Examples:
-        # Generate epics for phase 1
+        # Generate epics for phase
         github-backlog generate owner/repo --phase 1
         
-        # Generate issues for epic 2 in phase 1
+        # Generate issues for specific epic
         github-backlog generate owner/repo --phase 1 --epic 2
         
-        # Generate issues for all epics in phase 1
+        # Generate issues for all epics in phase
         github-backlog generate owner/repo --phase 1 --all-epics
     """
-    
-    # Validate inputs
-    if phase < 1 or phase > 8:
-        console.print("[red]Error: Phase must be between 1 and 8[/red]")
-        sys.exit(1)
     
     if epic and all_epics:
         console.print("[red]Error: Cannot specify both --epic and --all-epics[/red]")
@@ -469,30 +495,37 @@ def generate(repo_url: str, api_key: str, github_token: str, phase: int, epic: O
     
     # Load phases
     phases = manager.load_phases()
-    if not phases or phase > len(phases):
-        console.print("[red]Error: Phase data not found.[/red]")
+    if not phases:
+        console.print("[red]Error: Phase data not found. Run 'github-backlog init' first.[/red]")
         sys.exit(1)
     
-    phase_data = phases[phase - 1]
+    # Resolve phase to number
+    try:
+        phase_num = resolve_phase_id(phase, phases)
+    except click.BadParameter as e:
+        console.print(f"[red]Error: {e}[/red]")
+        sys.exit(1)
+    
+    phase_data = phases[phase_num - 1]
     
     # Load milestone mapping
     milestone_mapping = manager.get_milestone_mapping()
     
     if epic is None and not all_epics:
         # Generate epics for the phase
-        console.print(f"\n[bold]Generating epics for Phase {phase}: {phase_data['title']}[/bold]\n")
+        console.print(f"\n[bold]Generating epics for Phase {phase_num}: {phase_data['title']}[/bold]\n")
         
         with console.status("[bold green]Generating epics...") as status:
             epic_generator = EpicGenerator(api_key)
             
             try:
                 epics = epic_generator.generate_epics_for_phase(
-                    phase, phase_data['title'], phase_data['description'], project_data
+                    phase_num, phase_data['title'], phase_data['description'], project_data
                 )
                 console.print(f"[green]✓[/green] Generated {len(epics)} epics")
                 
                 # Save epics
-                manager.save_epics(phase, epics)
+                manager.save_epics(phase_num, epics)
                 
             except Exception as e:
                 console.print(f"[red]Error generating epics: {e}[/red]")
@@ -505,15 +538,15 @@ def generate(repo_url: str, api_key: str, github_token: str, phase: int, epic: O
             console.print(f"   [dim]{epic['description'][:100]}...[/dim]\n")
         
         # Create epics in GitHub if not dry run
-        if not dry_run and github_client and phase in milestone_mapping:
+        if not dry_run and github_client and phase_num in milestone_mapping:
             console.print("\n[bold]Creating epics in GitHub...[/bold]\n")
-            milestone_number = milestone_mapping[phase]
+            milestone_number = milestone_mapping[phase_num]
             
             with console.status("[bold green]Creating epic issues...") as status:
                 for i, epic in enumerate(epics, 1):
                     try:
                         epic_phase_data = {
-                            'id': f'phase-{phase}',
+                            'id': f'phase-{phase_num}',
                             'title': epic['title'],
                             'description': epic['description']
                         }
@@ -537,31 +570,35 @@ def generate(repo_url: str, api_key: str, github_token: str, phase: int, epic: O
                         console.print(f"[red]✗[/red] Failed to create Epic {i}: {e}")
                 
                 # Save updated epics with GitHub numbers
-                manager.save_epics(phase, epics)
+                manager.save_epics(phase_num, epics)
         
         console.print("\n[bold]Next steps:[/bold]")
-        console.print(f"Generate issues for specific epic: github-backlog generate {repo_url} --phase {phase} --epic N")
-        console.print(f"Generate issues for all epics: github-backlog generate {repo_url} --phase {phase} --all-epics")
+        console.print(f"Generate issues for specific epic: github-backlog generate {repo_url} --phase {phase_num} --epic N")
+        console.print(f"Generate issues for all epics: github-backlog generate {repo_url} --phase {phase_num} --all-epics")
     
     else:
         # Generate issues for epic(s)
         epics_to_process = []
         
         # Load epics
-        epics = manager.load_epics(phase)
+        epics = manager.load_epics(phase_num)
         if not epics:
-            console.print(f"[red]Error: No epics found for phase {phase}. Generate epics first.[/red]")
+            console.print(f"[red]Error: No epics found for phase {phase_num}. Generate epics first.[/red]")
             sys.exit(1)
         
         if all_epics:
             epics_to_process = [(i+1, epic) for i, epic in enumerate(epics)]
-            console.print(f"\n[bold]Generating issues for all {len(epics)} epics in Phase {phase}[/bold]\n")
+            console.print(f"\n[bold]Generating issues for all {len(epics)} epics in Phase {phase_num}[/bold]\n")
         else:
-            if epic < 1 or epic > len(epics):
-                console.print(f"[red]Error: Epic must be between 1 and {len(epics)}[/red]")
+            # Resolve epic to number
+            try:
+                epic_num = resolve_epic_id(epic, epics)
+            except click.BadParameter as e:
+                console.print(f"[red]Error: {e}[/red]")
                 sys.exit(1)
-            epics_to_process = [(epic, epics[epic - 1])]
-            console.print(f"\n[bold]Generating issues for Epic {epic}: {epics[epic - 1]['title']}[/bold]\n")
+            
+            epics_to_process = [(epic_num, epics[epic_num - 1])]
+            console.print(f"\n[bold]Generating issues for Epic {epic_num}: {epics[epic_num - 1]['title']}[/bold]\n")
         
         # Generate issues for each epic
         task_generator = TaskGenerator(api_key)
@@ -587,15 +624,15 @@ def generate(repo_url: str, api_key: str, github_token: str, phase: int, epic: O
                         issues.append(full_issue)
                     
                     # Save issues
-                    manager.save_issues(phase, epic_num, issues)
+                    manager.save_issues(phase_num, epic_num, issues)
                     
                     # Display issues
                     for i, issue in enumerate(issues, 1):
                         console.print(f"  {i}. {issue['title']} ({issue['priority']})")
                     
                     # Create issues in GitHub if not dry run
-                    if not dry_run and github_client and phase in milestone_mapping:
-                        milestone_number = milestone_mapping[phase]
+                    if not dry_run and github_client and phase_num in milestone_mapping:
+                        milestone_number = milestone_mapping[phase_num]
                         epic_github_number = epic_data.get('github_number')
                         
                         if not epic_github_number:
@@ -608,7 +645,7 @@ def generate(repo_url: str, api_key: str, github_token: str, phase: int, epic: O
                             try:
                                 task_url = github_client.create_task_issue(
                                     owner, repo_name, issue,
-                                    epic_github_number, f'phase-{phase}', milestone_number
+                                    epic_github_number, f'phase-{phase_num}', milestone_number
                                 )
                                 console.print(f"  [green]✓[/green] Created Issue {i}: {issue['title']}")
                             except Exception as e:

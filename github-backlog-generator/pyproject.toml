@@ -10,14 +10,13 @@ authors = [
 ]
 description = "CLI tool to transform GitHub repo READMEs into ordered project backlogs"
 readme = "README.md"
-license = "MIT"
+license = {text = "MIT"}
 requires-python = ">=3.8"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Software Development :: Version Control :: Git",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
@@ -45,8 +44,8 @@ Repository = "https://github.com/ford-at-home/agent-team-composer"
 Documentation = "https://github.com/ford-at-home/agent-team-composer/tree/main/github-backlog-generator#readme"
 
 [project.scripts]
-github-backlog = "github_backlog_generator.cli:main"
-github-backlog-generator = "github_backlog_generator.cli:main"
+github-backlog = "github_backlog_generator.cli_modular:cli"
+github-backlog-generator = "github_backlog_generator.cli_modular:cli"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
