@@ -77,62 +77,89 @@ Your GitHub token needs these scopes:
 
 ## 🚀 Usage
 
-### Basic Command
-```bash
-# Using the installed package
-github-backlog generate https://github.com/owner/repo
+### Modular Workflow (Recommended)
 
-# Or using the script directly
-python run.py https://github.com/owner/repo
+The tool now supports a fully modular workflow where each component can be generated and tested independently:
+
+#### Step 1: Initialize Project
+```bash
+# Analyze README and create local file structure
+github-backlog init https://github.com/owner/repo
 ```
 
-### Interactive Flow
+This creates:
+- Local directory `.backlog-owner-repo/` with cascading structure
+- Generates all 8 phase definitions
+- Saves project metadata from README analysis
 
-1. **The tool will analyze your repository:**
-   ```
-   🔍 Fetching repository: owner/repo
-   📖 Reading README content...
-   🧠 Analyzing project with AI...
-   ```
+#### Step 2: Create GitHub Milestones
+```bash
+# Create all 8 milestones in GitHub
+github-backlog milestones https://github.com/owner/repo
+```
 
-2. **You'll see available phases:**
-   ```
-   Select a phase to generate:
-   
-   1. 📚 Research & Discovery - Market Analysis & Requirements
-   2. 🧐 Planning & Design - System Architecture & UI/UX
-   3. 🔨 Build (Implementation) - Core Feature Development
-   4. 🧪 Test & QA - Comprehensive Testing & Validation
-   5. 🚀 Deployment - Production Release & Infrastructure
-   6. 🔁 Refinement & Iteration - Optimization & Growth
-   7. 🤖 AI Model Training - ML Pipeline & Optimization (if AI project)
-   
-   Enter phase number (1-7): 
-   ```
+#### Step 3: Generate Epics for a Phase
+```bash
+# Generate epics for phase 1 (creates epic issues in GitHub)
+github-backlog generate https://github.com/owner/repo --phase 1
+```
 
-3. **After selection, it creates everything automatically:**
-   ```
-   ✅ Created milestone: Phase 1 - Research & Discovery
-   ✅ Created epic: [EPIC] User Research and Persona Development
-   ✅ Created task: Conduct user interviews with target demographics
-   ✅ Created task: Analyze competitor platforms and features
-   ...
-   ```
+#### Step 4: Generate Issues for Epics
+```bash
+# Generate issues for epic 2 in phase 1
+github-backlog generate https://github.com/owner/repo --phase 1 --epic 2
 
-### Command Options
+# Or generate issues for all epics in phase 1
+github-backlog generate https://github.com/owner/repo --phase 1 --all-epics
+```
+
+### Check Status
+```bash
+# See what's been generated
+github-backlog status https://github.com/owner/repo
+```
+
+### File Structure Created
+```
+.backlog-owner-repo/
+├── metadata.json          # Project information from README
+├── milestone_mapping.json # GitHub milestone numbers
+└── phases/
+    ├── phases.json        # All phase definitions
+    ├── phase1/
+    │   ├── phase.json    # Phase 1 details
+    │   ├── epics.json    # All epics for phase 1
+    │   ├── epic1/
+    │   │   ├── epic.json # Epic 1 details
+    │   │   └── issues.json # Issues for epic 1
+    │   └── epic2/
+    │       ├── epic.json
+    │       └── issues.json
+    └── phase2/
+        └── ...
+```
+
+
+### Command Reference
 
 ```bash
-# Create milestones only (new command)
+# Initialize project (required first step)
+github-backlog init [OPTIONS] REPO_URL
+
+# Create GitHub milestones
 github-backlog milestones [OPTIONS] REPO_URL
 
-# Generate content
+# Generate epics or issues
 github-backlog generate [OPTIONS] REPO_URL
+  --phase INTEGER    Phase number (1-8) [required]
+  --epic INTEGER     Epic number (generates issues for that epic)
+  --all-epics        Generate issues for all epics in the phase
+  --dry-run          Preview without creating GitHub items
 
-Options:
-  --all-phases       Generate all 8 phases instead of just one
-  --phase INTEGER    Skip selection and generate specific phase (1-8)
-  --dry-run          Preview without creating GitHub issues
-  --output PATH      Save generated plan to JSON file
+# Check generation status
+github-backlog status REPO_URL
+
+Global Options:
   --api-key TEXT     Override Anthropic API key
   --github-token TEXT Override GitHub token
   --help             Show help message
@@ -141,22 +168,34 @@ Options:
 ### Examples
 
 ```bash
-# RECOMMENDED: Two-step workflow for new projects
-# Step 1: Create all milestones
+# Complete workflow for new project
+# 1. Initialize and analyze project
+github-backlog init https://github.com/owner/repo
+
+# 2. Check what was generated
+github-backlog status https://github.com/owner/repo
+
+# 3. Create all milestones in GitHub
 github-backlog milestones https://github.com/owner/repo
 
-# Step 2: Populate all milestones with content
-github-backlog generate --all-phases https://github.com/owner/repo
+# 4. Generate epics for phase 1
+github-backlog generate owner/repo --phase 1
 
-# OR populate specific phases one at a time
-github-backlog generate --phase 1 https://github.com/owner/repo
-github-backlog generate --phase 2 https://github.com/owner/repo
+# 5. Generate issues for specific epic
+github-backlog generate owner/repo --phase 1 --epic 2
 
-# Preview phase 1 without creating issues (dry run)
-github-backlog generate https://github.com/facebook/react --phase 1 --dry-run
+# 6. Generate issues for all epics in phase 1
+github-backlog generate owner/repo --phase 1 --all-epics
 
-# Generate phase 2 and save to file
-github-backlog generate owner/repo --phase 2 --output phase2.json
+# Incremental workflow (test each component)
+# Test epic generation without GitHub
+github-backlog generate owner/repo --phase 1 --dry-run
+
+# Test issue generation for one epic
+github-backlog generate owner/repo --phase 1 --epic 1 --dry-run
+
+# When ready, create in GitHub
+github-backlog generate owner/repo --phase 1 --epic 1
 ```
 
 ## 📋 What Gets Created?
