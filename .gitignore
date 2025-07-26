@@ -42,5 +42,11 @@ prisma/*.db
 # Bun files (if not using Bun)
 bun.lockb
 
+# Python virtual environment
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
 # OS files
 Thumbs.db
