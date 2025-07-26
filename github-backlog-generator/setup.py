@@ -41,8 +41,8 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "github-backlog=github_backlog_generator.cli_unified:cli",
-            "github-backlog-generator=github_backlog_generator.cli_unified:cli",  # Alternative name
+            "github-backlog=github_backlog_generator.cli:cli",
+            "github-backlog-generator=github_backlog_generator.cli:cli",  # Alternative name
         ],
     },
     keywords="github backlog project-management cli developer-tools",

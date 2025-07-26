@@ -44,8 +44,8 @@ Repository = "https://github.com/ford-at-home/agent-team-composer"
 Documentation = "https://github.com/ford-at-home/agent-team-composer/tree/main/github-backlog-generator#readme"
 
 [project.scripts]
-github-backlog = "github_backlog_generator.cli_unified:cli"
-github-backlog-generator = "github_backlog_generator.cli_unified:cli"
+github-backlog = "github_backlog_generator.cli:cli"
+github-backlog-generator = "github_backlog_generator.cli:cli"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
