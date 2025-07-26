@@ -1027,17 +1027,9 @@
    "Properties": {
     "ContainerProperties": {
      "Command": [
-      "python",
-      "cli.py",
-      "run",
-      "--repo",
-      "Ref::REPO",
-      "--phases",
-      "Ref::PHASES",
-      "--epics",
-      "Ref::EPICS",
-      "--issues",
-      "Ref::ISSUES"
+      "bash",
+      "-c",
+      "\n                    echo \"=== GitHub Backlog Generator Starting ===\"\n                    echo \"Environment REPO: $REPO\"\n                    \n                    # Fix GitHub token format if it's JSON\n                    if [[ $GITHUB_TOKEN == \"{\"* ]]; then\n                        echo \"Parsing JSON GitHub token format...\"\n                        export GITHUB_TOKEN=$(echo \"$GITHUB_TOKEN\" | python3 -c \"import sys,json; print(json.loads(sys.stdin.read()).get('github_token', ''))\" 2>/dev/null || echo \"$GITHUB_TOKEN\")\n                    fi\n                    echo \"GitHub token configured: ${GITHUB_TOKEN:0:15}...\"\n                    \n                    # Fix Anthropic API key format if it's JSON\n                    if [[ $ANTHROPIC_API_KEY == \"{\"* ]]; then\n                        echo \"Parsing JSON Anthropic key format...\"\n                        export ANTHROPIC_API_KEY=$(echo \"$ANTHROPIC_API_KEY\" | python3 -c \"import sys,json; print(json.loads(sys.stdin.read()).get('anthropic_key', ''))\" 2>/dev/null || echo \"$ANTHROPIC_API_KEY\")\n                    fi\n                    echo \"Anthropic API key configured: ${ANTHROPIC_API_KEY:0:15}...\"\n                    \n                    # Parse job parameters if they exist\n                    if [ ! -z \"$AWS_BATCH_JOB_PARAMETERS\" ]; then\n                        REPO_PARAM=$(echo \"$AWS_BATCH_JOB_PARAMETERS\" | python3 -c \"import sys,json; params=json.loads(sys.stdin.read()); print(params.get('REPO', ''))\" 2>/dev/null || echo \"\")\n                        if [ ! -z \"$REPO_PARAM\" ]; then\n                            export REPO=\"$REPO_PARAM\"\n                            echo \"Using parameter REPO: $REPO\"\n                        fi\n                    fi\n                    \n                    echo \"Final REPO: $REPO\"\n                    echo \"=== Starting Complete Workflow ===\"\n                    \n                    echo \"Step 1: Initialize project and generate phases...\"\n                    github-backlog-generator init \"$REPO\"\n                    \n                    echo \"Step 2: Create GitHub milestones from phases...\"\n                    github-backlog-generator create-milestones --repo \"$REPO\"\n                    \n                    echo \"Step 3: Create epics for phase 1...\"\n                    github-backlog-generator create-epics --repo \"$REPO\" -p 1\n                    \n                    echo \"Step 4: Create issues for first epic of first phase...\"\n                    github-backlog-generator create-issues --repo \"$REPO\" -p 1 -e 1\n                    \n                    echo \"=== Workflow Complete ===\"\n                    echo \"Summary: Generated phases, epics for phase 1, and issues for epic 1\"\n                    "
      ],
      "Environment": [
       {

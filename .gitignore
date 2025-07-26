@@ -62,4 +62,4 @@ github-backlog-generator/.backlog*
 phases.json
 
 *cdk.out*
-aws/cdk.out*
+aws/cdk.out/*
