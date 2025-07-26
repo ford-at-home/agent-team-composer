@@ -9,15 +9,19 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
+# Copy AWS requirements and install Python dependencies
+COPY aws/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy application code
-COPY . .
+# Copy the main github-backlog-generator source code
+COPY github-backlog-generator/ ./github-backlog-generator/
 
-# Copy the actual CLI script
-COPY cli.py .
+# Change to the source directory and install the package
+WORKDIR /app/github-backlog-generator
+RUN pip install -e .
 
-# Default command
-CMD ["python", "cli.py"]
+# Set back to app directory for execution
+WORKDIR /app
+
+# Default command using the proper entry point
+CMD ["github-backlog-generator"]

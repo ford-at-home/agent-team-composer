@@ -207,11 +207,52 @@ class MVPBacklogBatchStack(Stack):
                     )
                 ],
                 command=[
-                    'python', 'cli.py', 'run',
-                    '--repo', 'Ref::REPO',
-                    '--phases', 'Ref::PHASES',
-                    '--epics', 'Ref::EPICS', 
-                    '--issues', 'Ref::ISSUES'
+                    'bash', '-c', 
+                    '''
+                    echo "=== GitHub Backlog Generator Starting ==="
+                    echo "Environment REPO: $REPO"
+                    
+                    # Fix GitHub token format if it's JSON
+                    if [[ $GITHUB_TOKEN == "{"* ]]; then
+                        echo "Parsing JSON GitHub token format..."
+                        export GITHUB_TOKEN=$(echo "$GITHUB_TOKEN" | python3 -c "import sys,json; print(json.loads(sys.stdin.read()).get('github_token', ''))" 2>/dev/null || echo "$GITHUB_TOKEN")
+                    fi
+                    echo "GitHub token configured: ${GITHUB_TOKEN:0:15}..."
+                    
+                    # Fix Anthropic API key format if it's JSON
+                    if [[ $ANTHROPIC_API_KEY == "{"* ]]; then
+                        echo "Parsing JSON Anthropic key format..."
+                        export ANTHROPIC_API_KEY=$(echo "$ANTHROPIC_API_KEY" | python3 -c "import sys,json; print(json.loads(sys.stdin.read()).get('anthropic_key', ''))" 2>/dev/null || echo "$ANTHROPIC_API_KEY")
+                    fi
+                    echo "Anthropic API key configured: ${ANTHROPIC_API_KEY:0:15}..."
+                    
+                    # Parse job parameters if they exist
+                    if [ ! -z "$AWS_BATCH_JOB_PARAMETERS" ]; then
+                        REPO_PARAM=$(echo "$AWS_BATCH_JOB_PARAMETERS" | python3 -c "import sys,json; params=json.loads(sys.stdin.read()); print(params.get('REPO', ''))" 2>/dev/null || echo "")
+                        if [ ! -z "$REPO_PARAM" ]; then
+                            export REPO="$REPO_PARAM"
+                            echo "Using parameter REPO: $REPO"
+                        fi
+                    fi
+                    
+                    echo "Final REPO: $REPO"
+                    echo "=== Starting Complete Workflow ==="
+                    
+                    echo "Step 1: Initialize project and generate phases..."
+                    github-backlog-generator init "$REPO"
+                    
+                    echo "Step 2: Create GitHub milestones from phases..."
+                    github-backlog-generator create-milestones --repo "$REPO"
+                    
+                    echo "Step 3: Create epics for phase 1..."
+                    github-backlog-generator create-epics --repo "$REPO" -p 1
+                    
+                    echo "Step 4: Create issues for first epic of first phase..."
+                    github-backlog-generator create-issues --repo "$REPO" -p 1 -e 1
+                    
+                    echo "=== Workflow Complete ==="
+                    echo "Summary: Generated phases, epics for phase 1, and issues for epic 1"
+                    '''
                 ],
                 environment=[
                     {
