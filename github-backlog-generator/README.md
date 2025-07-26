@@ -1,27 +1,85 @@
 # GitHub Backlog Generator 🚀
 
-Transform any GitHub repository into a comprehensive project backlog with AI-powered analysis. This tool reads your README and generates a complete project plan with phases (milestones), epics, and detailed task issues - all created directly in your GitHub repository.
+Transform any GitHub repository into a comprehensive project backlog with AI-powered analysis. This CLI tool reads your README and generates a complete project plan with custom phases, intelligent preprocessing, resumable execution, and comprehensive reporting - all created directly in your GitHub repository.
 
 ## 🎯 What Does It Do?
 
 Given a GitHub repository URL, this tool:
 1. **Analyzes** your README to understand the project
-2. **Generates** a complete project plan with 6-10 phases
+2. **Processes** custom phases with LLM-powered optimization
 3. **Creates** GitHub milestones for each phase
 4. **Builds** epic issues with team composition and task lists
 5. **Generates** individual task issues with acceptance criteria
+6. **Provides** detailed project summaries with cost and timing analysis
 
-All content is created directly in your GitHub repository, ready for your team to start working!
+All content is created directly in your GitHub repository with intelligent state management and resumable execution!
+
+## 🚀 **Enhanced CLI Commands (v2.0)**
+
+### Complete Workflow
+```bash
+# Full workflow with custom phases and intelligent preprocessing
+github-backlog run --phases ./phases.json --repo owner/repo
+
+# Generate custom phases template
+github-backlog generate-phases --output phases.json
+
+# Enhanced project summary with costs and timing
+github-backlog summarize --repo owner/repo --include-costs --include-timing
+```
+
+### Modular Commands for Fine-Grained Control
+```bash
+# Individual workflow steps
+github-backlog create-milestones --repo owner/repo
+github-backlog create-epics --repo owner/repo --phase 3
+github-backlog create-issues --repo owner/repo --phase 4 --epic 2
+
+# Legacy support (still available)
+github-backlog init https://github.com/owner/repo
+github-backlog phases      # Create all GitHub milestones
+github-backlog epics       # Generate epics for all phases  
+github-backlog issues      # Create issues for all epics
+github-backlog status      # View hierarchical project status
+```
+
+### Advanced Features
+```bash
+# Custom phases with LLM preprocessing (default: enabled)
+github-backlog run --phases custom-phases.json --repo owner/repo
+
+# Skip LLM preprocessing
+github-backlog run --phases phases.json --repo owner/repo --skip-preprocessing
+
+# Resume interrupted workflow automatically
+github-backlog run --phases phases.json --repo owner/repo
+# -> Shows resume prompt if previous execution was interrupted
+
+# Force restart from beginning
+github-backlog run --phases phases.json --repo owner/repo --force-restart
+
+# Generate comprehensive reports
+github-backlog summarize --repo owner/repo --output-format markdown --output-file summary.md
+```
 
 ## ✨ Key Features
 
+### Core Capabilities
 - **🤖 AI-Powered Analysis**: Uses Claude to understand your project context
 - **📊 Structured Planning**: Follows software engineering best practices
 - **🧠 Cognitive Bias Mitigation**: Built-in frameworks to avoid common planning pitfalls
 - **🎯 Mental Models**: Applies JTBD, MoSCoW, Double Diamond, and more
 - **📝 GitHub Native**: Creates real milestones, epics, and issues
-- **🔄 Customizable Phases**: Adapts to your project type (AI/ML, e-commerce, etc.)
 - **✅ Acceptance Criteria**: Every issue includes testable completion criteria
+
+### Enhanced v2.0 Features
+- **📋 Custom Phases**: Define your own project phases via JSON files
+- **🤖 Intelligent Preprocessing**: LLM automatically optimizes phases 2-n based on prior context
+- **🔄 Resumable Execution**: Automatic checkpointing with state persistence
+- **🛡️ Concurrent Protection**: File-based locking prevents conflicts
+- **📊 Comprehensive Reporting**: Detailed summaries with cost estimates and timing analysis
+- **🧩 Modular Commands**: Use individual commands or complete workflow
+- **⚡ Enhanced Validation**: Robust input validation and helpful error messages
 
 ## 📦 Installation
 
@@ -77,9 +135,55 @@ Your GitHub token needs these scopes:
 
 ## 🚀 Usage
 
-### Modular Workflow (Recommended)
+### New v2.0 Workflow (Recommended)
 
-The tool now supports a fully modular workflow where each component can be generated and tested independently:
+The enhanced CLI provides powerful new capabilities while maintaining backward compatibility:
+
+#### Custom Phases Workflow
+```bash
+# 1. Generate a phases template
+github-backlog generate-phases --output my-phases.json
+
+# 2. Edit my-phases.json to define your project phases
+# 3. Run complete workflow with custom phases
+github-backlog run --phases my-phases.json --repo owner/repo
+
+# 4. Generate comprehensive summary
+github-backlog summarize --repo owner/repo --include-costs --include-timing --output-format markdown --output-file project-summary.md
+```
+
+#### Key New Features:
+
+**🔄 Resumable Execution**: If interrupted, the workflow automatically resumes from the last checkpoint:
+```bash
+github-backlog run --phases phases.json --repo owner/repo
+# -> "Previous execution detected! Do you want to resume from the last checkpoint? [Y/n]"
+```
+
+**🤖 LLM Preprocessing**: Phases 2-n are automatically analyzed and optimized based on prior phases:
+```bash
+# Enabled by default - phases are intelligently refined
+github-backlog run --phases phases.json --repo owner/repo
+
+# Disable if you want exact phases as specified
+github-backlog run --phases phases.json --repo owner/repo --skip-preprocessing
+```
+
+**📊 Enhanced Reporting**: Get detailed project insights:
+```bash
+# Terminal summary
+github-backlog summarize --repo owner/repo
+
+# Markdown report with costs and timing
+github-backlog summarize --repo owner/repo --output-format markdown --output-file summary.md --include-costs --include-timing
+
+# JSON export for integration
+github-backlog summarize --repo owner/repo --output-format json --output-file data.json
+```
+
+### Legacy Modular Workflow (Still Supported)
+
+The tool also supports the original modular workflow where each component can be generated and tested independently:
 
 #### Step 1: Initialize Project
 ```bash
@@ -142,6 +246,38 @@ github-backlog status https://github.com/owner/repo
 
 ### Command Reference
 
+#### New v2.0 Commands
+```bash
+# Complete workflow with custom phases
+github-backlog run [OPTIONS]
+  --phases PATH            Path to phases.json file [required]
+  --repo TEXT              Repository in format owner/repo [required]
+  --preprocess-phases      Enable LLM preprocessing (default: on)
+  --skip-preprocessing     Skip LLM preprocessing entirely
+  --force-restart          Force restart even if resumable state exists
+  --no-resume             Disable resume prompts and start fresh
+  --dry-run               Preview operations without creating GitHub items
+
+# Generate phases template
+github-backlog generate-phases [OPTIONS]
+  --output PATH           Save template to file
+  --show                  Display template content
+
+# Modular workflow commands
+github-backlog create-milestones --repo owner/repo [--dry-run]
+github-backlog create-epics --repo owner/repo [--phase INTEGER] [--dry-run]  
+github-backlog create-issues --repo owner/repo [--phase INTEGER] [--epic INTEGER] [--dry-run]
+
+# Enhanced summary and reporting
+github-backlog summarize [OPTIONS]
+  --repo TEXT             Repository in format owner/repo [required]
+  --output-format CHOICE  Output format: table/json/markdown (default: table)
+  --output-file PATH      Save summary to file
+  --include-costs         Include detailed cost breakdown
+  --include-timing        Include timing information from state
+```
+
+#### Legacy Commands (Still Available)
 ```bash
 # Initialize project (required first step)
 github-backlog init [OPTIONS] REPO_URL
@@ -306,7 +442,19 @@ MIT License - see [LICENSE](LICENSE) file.
 ## 🙋 FAQ
 
 **Q: Can I customize the phases?**
-A: Yes! The tool adapts phases based on your project type. AI projects get ML-specific phases, e-commerce gets marketplace phases, etc.
+A: Yes! Use `github-backlog generate-phases --output phases.json` to create a template, then customize it for your project. The tool also adapts phases based on your project type automatically.
+
+**Q: What's the difference between v1 and v2?**
+A: v2.0 adds custom phases, LLM preprocessing, resumable execution, enhanced reporting, and modular commands while maintaining full backward compatibility.
+
+**Q: What happens if my workflow gets interrupted?**
+A: The tool automatically saves state and will prompt you to resume from the last checkpoint when you run it again.
+
+**Q: Can I skip the LLM preprocessing?**
+A: Yes, use `--skip-preprocessing` if you want your phases used exactly as specified without AI optimization.
+
+**Q: How do I generate project reports?**
+A: Use `github-backlog summarize --repo owner/repo` for terminal output, or add `--output-format markdown --output-file summary.md` for file output.
 
 **Q: What if I already have some milestones?**
 A: The tool creates new milestones. You can use `--dry-run` to preview first.
@@ -318,7 +466,7 @@ A: Absolutely! The generated issues are starting points. Edit them to match your
 A: Yes, as long as your GitHub token has access to the repository.
 
 **Q: How much does it cost?**
-A: You only pay for Anthropic API usage (~$0.01-0.03 per phase generation).
+A: You only pay for Anthropic API usage (~$0.01-0.03 per phase generation, slightly more with preprocessing enabled).
 
 ## 🐛 Troubleshooting
 

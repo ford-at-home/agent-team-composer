@@ -4,7 +4,16 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Added
+### Added - New Streamlined CLI Commands (v2.0)
+- **`github-backlog-generator phases`** - Create all GitHub milestones with auto-detection
+- **`github-backlog-generator epics [--phase N]`** - Generate epics for all or specific phases
+- **`github-backlog-generator issues [--phase N --epic N]`** - Generate issues with fine-grained targeting
+- **Enhanced `github-backlog-generator status [--output json|table]`** - Hierarchical project view with JSON export
+- Repository auto-detection from `.backlog-*` directories for all new commands
+- Comprehensive CLI documentation in `CLI_COMMANDS.md`
+- Unit tests and integration tests for all new commands (`tests/test_new_commands.py`)
+
+### Added - Infrastructure & Tracking
 - Cost and timing tracking at CLI level with `--cost` and `--time` flags
 - Native CLI integration for accurate API usage data
 - Persistent cost storage to project directory for historical analysis
@@ -12,10 +21,18 @@ All notable changes to this project will be documented in this file.
 - Comprehensive .gitignore for Python project with venv and backlog exclusions
 
 ### Enhanced
-- CLI architecture with global cost/timing flags on all commands
+- CLI architecture with intuitive primitive commands while maintaining backward compatibility
+- Status command with both tabular summary and hierarchical tree views
+- Auto-detection logic for seamless workflow after project initialization
 - Orchestrator scripts simplified by removing internal cost estimation
 - Clean delegation to CLI for all tracking functionality
 - Better error handling and validation in orchestrator scripts
+- Documentation updated across README.md, DEVELOPMENT.md, and new CLI_COMMANDS.md
+
+### Backward Compatibility
+- All original commands (`init`, `generate`, `milestones`, `pricing`) remain fully functional
+- Existing workflows and scripts continue to work without modification
+- Legacy command syntax preserved alongside new streamlined commands
 
 ### Technical
 - Added `cost_tracker.py` module for persistent cost tracking

@@ -1,37 +1,54 @@
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
 
 # Environment files
 .env
 .env.local
 .env.*.local
 
-# Database files
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Database files (if using SQLite for local dev/testing)
 *.db
 *.sqlite
-prisma/*.db
 
 # Backup files
 *.bak
@@ -39,14 +56,7 @@ prisma/*.db
 # Development config
 .agent-team-composer-*.json
 
-# Bun files (if not using Bun)
-bun.lockb
+github-backlog-generator/.backlog*
 
-# Python virtual environment
-venv/
-__pycache__/
-*.pyc
-*.pyo
-
-# OS files
-Thumbs.db
+# Output files
+phases.json

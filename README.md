@@ -48,35 +48,112 @@ pip install ./github-backlog-generator
 
 ## 🚀 Quick Start
 
-1. **Set up your API keys**:
-   ```bash
-   export ANTHROPIC_API_KEY="your-anthropic-api-key"
-   export GITHUB_TOKEN="your-github-token-with-repo-scope"
-   ```
+### Simple Workflow (Recommended)
 
-2. **Initialize your project**:
+Navigate to the `github-backlog-generator` directory and use our Makefile commands:
+
+```bash
+cd github-backlog-generator
+
+# 1. Install dependencies
+make install
+
+# 2. Set up your API keys
+export ANTHROPIC_API_KEY="your-anthropic-api-key"
+export GITHUB_TOKEN="your-github-token-with-repo-scope"
+
+# 3. Initialize project (interactive - you'll be prompted for repo URL)
+make init
+
+# 4. Create GitHub milestones for all phases
+make phases
+
+# 5. Generate epics for all phases
+make epics
+
+# 6. Create detailed issues for all epics
+make issues
+```
+
+**That's it!** Your GitHub repository now has a complete structured backlog with milestones, epics, and detailed task issues.
+
+### Manual CLI Usage
+
+#### 🚀 **New Streamlined Commands (Recommended)**
+
+The CLI now provides intuitive primitive commands that auto-detect your project:
+
+```bash
+# 1. Initialize project
+github-backlog-generator init https://github.com/owner/repo
+
+# 2. Create all phases (GitHub milestones) 
+github-backlog-generator phases
+
+# 3. Generate epics for all phases
+github-backlog-generator epics
+
+# 4. Generate issues for all epics across all phases  
+github-backlog-generator issues
+
+# 5. View hierarchical project status
+github-backlog-generator status --output table
+github-backlog-generator status --output json
+```
+
+#### 🎯 **Targeted Generation Commands**
+
+For fine-grained control over specific phases and epics:
+
+```bash
+# Generate epics for specific phase only
+github-backlog-generator epics --phase 3
+
+# Generate issues for specific phase (all epics)
+github-backlog-generator issues --phase 5
+
+# Generate issues for specific epic in specific phase
+github-backlog-generator issues --phase 4 --epic 2
+```
+
+#### 📊 **Enhanced Status and Monitoring**
+
+```bash
+# Table view with both summary and hierarchical structure
+github-backlog-generator status
+
+# JSON output for programmatic use
+github-backlog-generator status --output json
+
+# View specific repository status
+github-backlog-generator status https://github.com/owner/repo
+```
+
+#### 🔧 **Legacy CLI Usage (Still Supported)**
+
+If you prefer the original command structure:
+
+1. **Initialize your project**:
    ```bash
    github-backlog init https://github.com/owner/repo
    ```
 
-3. **Create milestones** (optional):
+2. **Create milestones** (optional):
    ```bash
    github-backlog milestones https://github.com/owner/repo
    ```
 
-4. **Generate epics and tasks**:
+3. **Generate epics and tasks**:
    ```bash
    github-backlog generate --phase 1 https://github.com/owner/repo
    # Or generate all epics first:
    github-backlog generate --all-epics https://github.com/owner/repo
    ```
 
-5. **Check project status**:
+4. **Check project status**:
    ```bash
    github-backlog status https://github.com/owner/repo
    ```
-
-That's it! Check your GitHub repository for the newly created milestone, epic, and task issues.
 
 ## 📋 Available Phases
 
@@ -91,24 +168,85 @@ The tool generates backlogs for 8 standard development phases:
 7. **Deployment** - Production deployment and DevOps
 8. **Maintenance & Growth** - Ongoing improvements and scaling
 
+## 🎼 Workflow Composition with run.sh
+
+For advanced users who need custom orchestration, we provide `run.sh` - a comprehensive example script that demonstrates how to compose CLI commands into sophisticated workflows:
+
+```bash
+# Basic orchestration - generates complete backlog
+./run.sh https://github.com/owner/repo
+
+# With cost tracking
+./run.sh --cost https://github.com/owner/repo
+
+# With timing analysis and verbose output
+./run.sh --time --verbose https://github.com/owner/repo
+
+# Selective phase processing (only phases 1-3)
+./run.sh --phases 1-3 https://github.com/owner/repo
+
+# Generate only epics, skip issues
+./run.sh --epics-only https://github.com/owner/repo
+
+# Dry run mode - preview without creating GitHub items
+./run.sh --dry-run https://github.com/owner/repo
+```
+
+### Why run.sh Exists
+
+The `run.sh` script serves as a **workflow composition example** showing how to:
+
+- **Chain commands**: Initialize → Create milestones → Generate epics → Create issues
+- **Add orchestration logic**: Error handling, progress tracking, timing analysis
+- **Enable advanced features**: Cost tracking, selective processing, dry runs
+- **Provide user experience**: Colored output, progress reporting, summary generation
+
+**Key Features of run.sh:**
+- 🎯 **Orchestration**: Handles the complete workflow from start to finish
+- 💰 **Cost Tracking**: Real-time API cost monitoring with persistent data
+- ⏱️ **Timing Analysis**: Performance tracking for each workflow step  
+- 🎨 **Rich Output**: Colored progress indicators and detailed summaries
+- 🔍 **Selective Processing**: Target specific phases or epic generation only
+- 🧪 **Dry Run Mode**: Preview generated content without creating GitHub items
+- 📊 **Historical Analysis**: Persistent tracking data for multiple runs
+
+Use `run.sh` as inspiration for building your own custom workflows that fit your team's specific needs.
+
 ## 🛠️ Advanced Usage
 
 ### Cost and Timing Tracking
-Track API costs and execution time:
+Track API costs and execution time with any command:
 ```bash
-# Track costs for any command
-github-backlog --cost init https://github.com/owner/repo
-github-backlog --cost generate --phase 1 https://github.com/owner/repo
+# Track costs for any command (new or legacy)
+github-backlog-generator --cost init https://github.com/owner/repo
+github-backlog-generator --cost epics --phase 1
+github-backlog-generator --cost issues
 
 # Track timing for performance analysis
-github-backlog --time generate --all-epics https://github.com/owner/repo
+github-backlog-generator --time epics
+github-backlog-generator --time issues --phase 3
 
 # Use both together
-github-backlog --cost --time status https://github.com/owner/repo
+github-backlog-generator --cost --time status
 ```
 
-### Modular Workflow
-Work with individual components:
+### 🎯 **New Streamlined Workflow**
+Work with the intuitive new commands:
+```bash
+# Complete workflow with auto-detection
+github-backlog-generator init https://github.com/owner/repo
+github-backlog-generator phases
+github-backlog-generator epics
+github-backlog-generator issues
+github-backlog-generator status --output json
+
+# Selective generation
+github-backlog-generator epics --phase 2
+github-backlog-generator issues --phase 3 --epic 1
+```
+
+### 🔧 **Legacy Modular Workflow** 
+Original command structure (still fully supported):
 ```bash
 # Initialize project structure
 github-backlog init https://github.com/owner/repo
@@ -127,6 +265,19 @@ github-backlog generate --epic "Epic Title" https://github.com/owner/repo
 
 # Check current status
 github-backlog status https://github.com/owner/repo
+```
+
+### 📊 **Status and Monitoring**
+Enhanced status command with multiple output formats:
+```bash
+# Table view with hierarchical structure (default)
+github-backlog-generator status
+
+# JSON output for integration with other tools
+github-backlog-generator status --output json | jq '.phases[0].epics'
+
+# Monitor specific repository
+github-backlog-generator status https://github.com/owner/repo --output json
 ```
 
 ### Model Selection
@@ -187,7 +338,7 @@ pytest
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This software is proprietary and confidential, exclusively owned by Ford Prior. All rights reserved. See the [LICENSE](LICENSE) file for full terms.
 
 ## 🙏 Acknowledgments
 

@@ -36,6 +36,12 @@ pytest --cov=github_backlog_generator
 
 # Run specific test file
 pytest tests/test_cli.py
+
+# Run tests for new CLI commands
+pytest tests/test_new_commands.py -v
+
+# Run integration tests
+python3 test_integration.py
 ```
 
 ## Code Style
@@ -56,6 +62,41 @@ flake8 src/
 mypy src/
 ```
 
+## CLI Architecture
+
+### New Streamlined Commands (v2.0+)
+
+The CLI now provides intuitive primitive commands with auto-detection:
+
+- **`phases`** - Create all GitHub milestones (alias for `milestones`)
+- **`epics`** - Generate epics for all phases or specific phase (`--phase N`)
+- **`issues`** - Generate issues for all epics or specific combinations (`--phase N --epic N`)
+- **`status`** - Enhanced hierarchical status with JSON/table output (`--output json|table`)
+
+### Auto-Detection Logic
+
+All new commands support repository auto-detection:
+1. Searches for `.backlog-*` directories
+2. Extracts owner/repo from directory names
+3. Falls back to error if no repository found
+
+### Command Implementation
+
+The new commands are implemented in `src/github_backlog_generator/cli.py`:
+- `phases()` - Lines 878-909, calls existing `milestones()` function
+- `epics()` - Lines 912-973, orchestrates multiple `generate()` calls  
+- `issues()` - Lines 976-1043, handles phase/epic targeting logic
+- `enhanced_status()` - Lines 779-958, enhanced with JSON output
+
+### Backward Compatibility
+
+All original commands remain fully functional:
+- `init` - Initialize project and generate phases
+- `generate` - Generate epics/issues (original syntax with --phase, --epic, --all-epics)
+- `milestones` - Create GitHub milestones
+- `status` - Show project status (enhanced with new features)
+- `pricing` - Display API pricing information
+
 ## Project Structure
 
 ```
@@ -63,15 +104,19 @@ github-backlog-generator/
 ├── src/
 │   └── github_backlog_generator/
 │       ├── __init__.py
-│       ├── cli.py              # Main CLI entry point
+│       ├── cli.py              # Main CLI entry point (enhanced with new commands)
 │       ├── github_client.py    # GitHub API interactions
 │       ├── phase_generator.py  # Phase generation logic
 │       ├── epic_generator.py   # Epic creation logic
 │       └── readme_parser.py    # README parsing utilities
 ├── tests/                      # Test files
-├── setup.py                    # Package configuration
-├── pyproject.toml             # Modern package config
-├── requirements.txt           # Dependencies
+│   ├── test_simple.py         # Basic import tests
+│   └── test_new_commands.py   # Tests for new CLI commands
+├── CLI_COMMANDS.md            # Comprehensive CLI documentation
+├── test_integration.py        # Integration tests for new commands
+├── setup.py                   # Package configuration
+├── pyproject.toml            # Modern package config
+├── requirements.txt          # Dependencies
 └── README.md                  # User documentation
 ```
 
