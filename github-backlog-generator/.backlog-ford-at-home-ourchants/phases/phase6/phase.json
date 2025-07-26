@@ -1,0 +1,12 @@
+{
+  "number": 6,
+  "title": "\ud83d\udcca Data Migration & Validation",
+  "description": "Custom phase for ensuring clean data migration. Develop and test JSON sample data loading, implement data validation scripts, create data quality checks for existing records. Verify proper handling of datetime objects and duration calculations.",
+  "id": "data-migration",
+  "dueDate": "2025-10-18T00:58:09.775705",
+  "suggestedRoles": [
+    "Data Engineer",
+    "QA Engineer",
+    "Database Administrator"
+  ]
+}

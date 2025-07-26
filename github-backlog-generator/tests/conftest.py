@@ -14,7 +14,7 @@ def mock_env_vars(monkeypatch):
     """Mock environment variables for testing."""
     monkeypatch.setenv('ANTHROPIC_API_KEY', 'test-anthropic-key')
     monkeypatch.setenv('GITHUB_TOKEN', 'test-github-token')
-    monkeypatch.setenv('GITHUB_BACKLOG_MODEL', 'claude-3-sonnet-20240229')
+    monkeypatch.setenv('GITHUB_BACKLOG_MODEL', 'claude-3-5-sonnet-20241022')
 
 
 @pytest.fixture

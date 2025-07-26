@@ -15,29 +15,23 @@ from .github_client import GitHubClient
 
 console = Console()
 
-# Define the 8 standard phases
-STANDARD_PHASES = [
-    "Discovery & Requirements",
-    "Technical Planning & Architecture", 
-    "UI/UX Design & Prototyping",
-    "Core Development",
-    "System Integration & Testing",
-    "Quality Assurance & Testing",
-    "Deployment & Distribution",
-    "Launch & Documentation"
-]
+# Import BacklogManager to read AI-generated phases
+from pathlib import Path
+import json
 
-# Phase descriptions
-PHASE_DESCRIPTIONS = {
-    1: "This phase focuses on understanding the project requirements, user needs, and technical constraints. The goal is to establish a clear vision and roadmap.",
-    2: "This phase involves designing the system architecture, selecting technologies, and planning the technical implementation approach.",
-    3: "This phase centers on creating the user experience, visual design, and interactive prototypes to validate design decisions.",
-    4: "This phase is where the main development work happens, building the core features and functionality of the system.",
-    5: "This phase focuses on integrating different system components and ensuring they work together seamlessly.",
-    6: "This phase involves comprehensive testing to ensure quality, performance, and reliability of the system.",
-    7: "This phase handles packaging, deployment setup, and distribution mechanisms for the application.",
-    8: "This phase covers documentation, training materials, and go-to-market activities for the launch."
-}
+def load_generated_phases(owner: str, repo_name: str):
+    """Load AI-generated phases from local storage."""
+    # Create .backlog directory inside github-backlog-generator directory
+    generator_dir = Path(__file__).parent.parent.parent
+    base_dir = generator_dir / f".backlog-{owner}-{repo_name}"
+    phases_file = base_dir / "phases" / "phases.json"
+    
+    if not phases_file.exists():
+        raise FileNotFoundError(f"No phases found. Please run 'github-backlog init {owner}/{repo_name}' first.")
+    
+    with open(phases_file, 'r') as f:
+        data = json.load(f)
+        return data['phases']
 
 
 @click.command()
@@ -86,17 +80,29 @@ def milestones(repo_url: str, github_token: str, dry_run: bool):
             sys.exit(1)
         console.print("[green]✓[/green] Repository access validated")
     
+    # Load AI-generated phases
+    try:
+        phases = load_generated_phases(owner, repo_name)
+        console.print(f"[green]✓[/green] Loaded {len(phases)} AI-generated phases")
+    except FileNotFoundError as e:
+        console.print(f"[red]Error: {e}[/red]")
+        console.print("[yellow]Run 'github-backlog init <repo-url>' first to generate phases.[/yellow]")
+        sys.exit(1)
+    except Exception as e:
+        console.print(f"[red]Error loading phases: {e}[/red]")
+        sys.exit(1)
+    
     # Display what will be created
-    console.print("\n[bold]The following 8 milestones will be created:[/bold]\n")
+    console.print(f"\n[bold]The following {len(phases)} AI-generated milestones will be created:[/bold]\n")
     
     table = Table(show_header=True)
     table.add_column("Phase", style="cyan", width=5)
     table.add_column("Title", style="green")
     table.add_column("Due Date", style="yellow")
     
-    for i in range(1, 9):
-        due_date = (datetime.now() + timedelta(days=i * 14)).strftime("%Y-%m-%d")
-        table.add_row(str(i), STANDARD_PHASES[i-1], due_date)
+    for i, phase in enumerate(phases, 1):
+        due_date = datetime.fromisoformat(phase['dueDate'].replace('Z', '+00:00')).strftime("%Y-%m-%d")
+        table.add_row(str(i), phase['title'], due_date)
     
     console.print(table)
     console.print()
@@ -119,19 +125,19 @@ def milestones(repo_url: str, github_token: str, dry_run: bool):
     milestone_urls = []
     
     with console.status("[bold green]Creating milestones...") as status:
-        for phase_num in range(1, 9):
+        for phase_num, phase in enumerate(phases, 1):
             try:
                 phase_data = {
-                    'id': f'phase-{phase_num}',
-                    'title': STANDARD_PHASES[phase_num - 1],
-                    'description': PHASE_DESCRIPTIONS[phase_num],
-                    'dueDate': (datetime.now() + timedelta(days=phase_num * 14)).isoformat()
+                    'id': phase['id'],
+                    'title': phase['title'],
+                    'description': phase['description'],
+                    'dueDate': phase['dueDate']
                 }
                 
                 urls = github_client.create_milestones(owner, repo_name, [phase_data])
                 milestone_urls.extend(urls)
                 created_count += 1
-                console.print(f"[green]✓[/green] Phase {phase_num}: {STANDARD_PHASES[phase_num - 1]}")
+                console.print(f"[green]✓[/green] Phase {phase_num}: {phase['title']}")
                 
             except Exception as e:
                 console.print(f"[red]✗[/red] Phase {phase_num}: {e}")

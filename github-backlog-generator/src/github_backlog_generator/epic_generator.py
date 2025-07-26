@@ -1,6 +1,7 @@
 """Epic Generator - Creates multiple epics per phase with tasks."""
 
 import json
+import os
 import re
 from typing import Dict, List, Optional
 
@@ -39,35 +40,93 @@ class EpicGenerator:
     
     def generate_epics_for_phase(self, phase_number: int, phase_name: str, 
                                 phase_description: str, project_data: Dict[str, any]) -> List[Dict[str, any]]:
-        """Generate 5-10 epics for a given phase."""
+        """Generate 5-10 epics for a given phase using Claude tool calling."""
         
-        for attempt in range(self.max_retries):
-            try:
-                prompt = self._build_prompt(phase_number, phase_name, phase_description, project_data)
+        prompt = self._build_prompt(phase_number, phase_name, phase_description, project_data)
+        
+        # Define the tool schema for epic generation
+        epic_tool = {
+            "name": "create_phase_epics",
+            "description": "Create comprehensive epics for a project phase with detailed descriptions and tasks",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "phaseId": {
+                        "type": "string",
+                        "description": "Phase identifier"
+                    },
+                    "phaseTitle": {
+                        "type": "string",
+                        "description": "Phase title"
+                    },
+                    "epics": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "title": {
+                                    "type": "string",
+                                    "description": "Epic title without [EPIC] prefix"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "Comprehensive epic description with all 5 required sections: PURPOSE & OBJECTIVES, DELIVERABLES & SUCCESS CRITERIA, TECHNICAL APPROACH, STAKEHOLDER VALUE, DEPENDENCIES & RISKS"
+                                },
+                                "suggestedRoles": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "List of roles needed for this epic"
+                                },
+                                "tasks": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "title": {
+                                                "type": "string",
+                                                "description": "Specific, actionable task title"
+                                            },
+                                            "description": {
+                                                "type": "string", 
+                                                "description": "Detailed description of what needs to be done"
+                                            },
+                                            "suggestedRole": {
+                                                "type": "string",
+                                                "description": "The role best suited for this task"
+                                            }
+                                        },
+                                        "required": ["title", "description", "suggestedRole"]
+                                    },
+                                    "description": "3-7 specific tasks for this epic"
+                                }
+                            },
+                            "required": ["title", "description", "suggestedRoles", "tasks"]
+                        }
+                    }
+                },
+                "required": ["phaseId", "phaseTitle", "epics"]
+            }
+        }
+        
+        try:
+            message = self.anthropic.messages.create(
+                model=os.getenv('GITHUB_BACKLOG_MODEL', 'claude-3-5-sonnet-20241022'),
+                max_tokens=8000,
+                temperature=0.0,
+                messages=[{
+                    "role": "user",
+                    "content": prompt
+                }],
+                tools=[epic_tool],
+                tool_choice={"type": "tool", "name": "create_phase_epics"}
+            )
+            
+            # Extract the tool result - guaranteed to be valid JSON
+            tool_result = message.content[0].input
+            return tool_result['epics']
                 
-                message = self.anthropic.messages.create(
-                    model="claude-3-sonnet-20240229",
-                    max_tokens=4096,
-                    temperature=0.7,
-                    messages=[{
-                        "role": "user",
-                        "content": prompt
-                    }]
-                )
-                
-                response_text = message.content[0].text
-                phase_epics = self._extract_and_validate_epics(response_text)
-                
-                return phase_epics['epics']
-                
-            except (json.JSONDecodeError, ValidationError) as e:
-                if attempt < self.max_retries - 1:
-                    print(f"Attempt {attempt + 1} failed: {str(e)}. Retrying...")
-                    continue
-                else:
-                    raise Exception(f"Failed to generate valid epics after {self.max_retries} attempts: {str(e)}")
-            except Exception as e:
-                raise Exception(f"Failed to generate epics: {str(e)}")
+        except Exception as e:
+            raise Exception(f"Failed to generate epics: {str(e)}")
     
     def _build_prompt(self, phase_number: int, phase_name: str, phase_description: str, project_data: Dict[str, any]) -> str:
         """Build the prompt for epic generation."""
@@ -198,7 +257,7 @@ Return a JSON object with EXACTLY this structure:
   "epics": [
     {{
       "title": "Epic Title Without [EPIC] Prefix",
-      "description": "Clear description of what this epic accomplishes, its strategic importance, and key deliverables. Should reference specific project features and goals.",
+      "description": "COMPREHENSIVE EPIC DESCRIPTION:\\n\\n**EPIC PURPOSE & OBJECTIVES:**\\nWhat this epic fundamentally accomplishes and why it exists in the project lifecycle.\\n\\n**DELIVERABLES & SUCCESS CRITERIA:**\\nSpecific, measurable outputs that define epic completion and acceptance criteria.\\n\\n**TECHNICAL APPROACH:**\\nKey technical decisions, tools, frameworks, and integration points.\\n\\n**STAKEHOLDER VALUE:**\\nHow this epic creates value for end users and contributes to business objectives.\\n\\n**DEPENDENCIES & RISKS:**\\nWhat this epic depends on and potential blockers with mitigation strategies.",
       "suggestedRoles": ["Role 1", "Role 2"],
       "tasks": [
         {{
@@ -255,38 +314,3 @@ Before finalizing each epic, validate against:
 - **Risk Disclosure**: Are technical/business risks acknowledged?
 - **Testability**: Can we measure when this epic is complete?"""
     
-    def _extract_and_validate_epics(self, response_text: str) -> Dict[str, any]:
-        """Extract and validate epic data from LLM response."""
-        
-        # Try to extract JSON from various formats
-        json_text = None
-        
-        # Method 1: Direct JSON
-        json_match = re.search(r'\{[\s\S]*\}', response_text)
-        if json_match:
-            json_text = json_match.group(0)
-        
-        # Method 2: JSON in code block
-        if not json_text:
-            code_block_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', response_text)
-            if code_block_match:
-                json_text = code_block_match.group(1)
-        
-        if not json_text:
-            raise ValueError("No JSON found in response")
-        
-        # Parse and validate
-        try:
-            parsed = json.loads(json_text)
-            validated = PhaseEpics(**parsed)
-            return validated.dict()
-        except json.JSONDecodeError as e:
-            # Try to fix common JSON errors
-            # Remove trailing commas
-            json_text = re.sub(r',\s*}', '}', json_text)
-            json_text = re.sub(r',\s*]', ']', json_text)
-            
-            # Try again
-            parsed = json.loads(json_text)
-            validated = PhaseEpics(**parsed)
-            return validated.dict()

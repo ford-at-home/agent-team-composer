@@ -1,6 +1,7 @@
 """Phase Generator - Creates SDLC phases using AI."""
 
 import json
+import os
 import re
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
@@ -30,22 +31,63 @@ class PhaseGenerator:
         self.anthropic = Anthropic(api_key=api_key)
     
     def generate_phases(self, project_data: Dict[str, any]) -> List[Dict[str, any]]:
-        """Generate project phases based on README analysis."""
+        """Generate project phases based on README analysis using Claude tool calling."""
         prompt = self._build_prompt(project_data)
+        
+        # Define the tool schema for phase generation
+        phase_tool = {
+            "name": "create_project_phases",
+            "description": "Create comprehensive project phases with detailed descriptions",
+            "input_schema": {
+                "type": "object",
+                "properties": {
+                    "phases": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "description": "Unique phase identifier (lowercase, hyphenated)"
+                                },
+                                "title": {
+                                    "type": "string", 
+                                    "description": "Phase title with emoji and specific project context"
+                                },
+                                "description": {
+                                    "type": "string",
+                                    "description": "Comprehensive phase description with all 7 required sections"
+                                },
+                                "suggestedRoles": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                    "description": "List of roles needed for this phase"
+                                }
+                            },
+                            "required": ["id", "title", "description", "suggestedRoles"]
+                        }
+                    }
+                },
+                "required": ["phases"]
+            }
+        }
         
         try:
             message = self.anthropic.messages.create(
-                model="claude-3-sonnet-20240229",
-                max_tokens=4000,
-                temperature=0.7,
+                model=os.getenv('GITHUB_BACKLOG_MODEL', 'claude-3-5-sonnet-20241022'),
+                max_tokens=8000,
+                temperature=0.0,
                 messages=[{
-                    "role": "user",
+                    "role": "user", 
                     "content": prompt
-                }]
+                }],
+                tools=[phase_tool],
+                tool_choice={"type": "tool", "name": "create_project_phases"}
             )
             
-            response_text = message.content[0].text
-            phases = self._extract_phases(response_text)
+            # Extract the tool result - guaranteed to be valid JSON
+            tool_result = message.content[0].input
+            phases = tool_result["phases"]
             
             # Add due dates to phases
             phases_with_dates = self._calculate_due_dates(phases)
@@ -57,187 +99,36 @@ class PhaseGenerator:
     
     def _build_prompt(self, project_data: Dict[str, any]) -> str:
         """Build the prompt for phase generation."""
-        return f"""You are an expert product manager and software architect working to plan a software project using GitHub-native workflows.
+        return f"""Create a comprehensive project phase breakdown for this GitHub repository. You MUST return valid JSON with detailed phase descriptions.
 
-# 🔀 Understanding Phases (Milestones) in Software Engineering
-
-In Agile and project-based software engineering, **phases** represent **time-boxed cycles or logical stages** that define the flow of work from idea to production. While sprints are fixed-length (e.g., 2-week cycles), **phases** refer to broader conceptual or strategic stages that a project passes through.
-
-## ⛓️ Core Phases Theory
-
-Most software projects naturally move through these core phases:
-
-### 1. 📚 Research & Discovery
-- Identify the core problem
-- Interview users, scan competitors, gather technical constraints
-- Output: Requirements, user insights, risk assessments
-
-### 2. 🧐 Planning & Design
-- Define MVP scope and priorities
-- Sketch flows, architecture, and UI
-- Break work into epics and stories
-- Output: Diagrams, issue plans, milestone roadmap
-
-### 3. 🔨 Build (Implementation)
-- Write and review code, develop infrastructure
-- Stories executed via pull requests and tasks
-- Output: Working software components
-
-### 4. 🧪 Test & QA
-- Write unit, integration, and E2E tests
-- Perform manual and automated QA
-- Output: Verified and stable features
-
-### 5. 🚀 Deployment
-- Roll out to staging and production
-- Configure CI/CD, observability, alerts
-- Output: Live production system
-
-### 6. 🔁 Refinement & Iteration
-- Address feedback, UX gaps, edge cases
-- Improve performance, fix bugs, explore enhancements
-- Output: Stable, usable, improved system
-
-## 🛠️ GitHub Workflow Structure
-
-In GitHub-native workflows:
-- **Milestones** = phases (e.g., "Phase 1 – Research")
-- **Epics** = GitHub issues labeled 'epic' and titled with '[EPIC]'
-- **Child Issues** = linked inside the epic body
-- **Tracking** = GitHub shows progress of issues completed per milestone
-
-## ⚖️ Expert Judgment: Custom Phases
-
-Expert teams frequently add custom milestones based on domain-specific needs:
-- Data Audit & Cleanup - Validate, migrate, or cleanse legacy data sources
-- AI Prompt Tuning - Optimize prompt engineering for LLM-based systems
-- Migration Planning - Prepare infrastructure or app for cloud transition
-- Security Hardening - Apply infosec practices before major deployment
-- UX Validation Loop - Run rapid feedback cycles with real end-users
-
-# 🏁 PHASE PLANNING: Mental Models & Cognitive Biases
-
-## 🧠 Mental Models & Frameworks for Phase Planning
-
-| Tool | Purpose |
-|------|---------|
-| **Double Diamond** (Discover → Define → Develop → Deliver) | Guides how to structure exploratory vs. execution phases |
-| **Systems Thinking** | Encourages holistic phase planning across interconnected functions (infra, UX, backend, QA) |
-| **Timeboxing** | Forces prioritization within constraints; helps bound each milestone by realistic effort |
-| **Critical Path Analysis** | Surfaces the minimal sequence of phases to hit MVP efficiently |
-| **Inverse Planning** | Work backwards from the launch to ensure each phase ladders into the outcome |
-
-## ⚠️ Cognitive Biases to Watch
-
-| Bias | How It Shows Up |
-|------|-----------------|
-| **Planning Fallacy** | Underestimating how long phases will take—especially early ones |
-| **Recency Bias** | Over-indexing on current blockers rather than upcoming risks |
-| **Sunk Cost Fallacy** | Continuing unnecessary phases just because effort has already been spent |
-| **Optimism Bias** | Overconfident timelines that don't buffer for unknowns |
-
-# YOUR TASK
-
-Given the README.md file below, analyze the product specification and generate a comprehensive project phase breakdown using the mental models above while avoiding the cognitive biases.
-
-CRITICAL INSTRUCTIONS:
-1. Apply **Double Diamond** thinking: Include both divergent (explore) and convergent (decide) activities
-2. Use **Systems Thinking**: Consider how each phase impacts others (e.g., architecture affects testing)
-3. Apply **Timeboxing**: Each phase should be 2-4 weeks to avoid Planning Fallacy
-4. Use **Critical Path Analysis**: Order phases to unblock the next efficiently
-5. Apply **Inverse Planning**: Work backwards from MVP launch to ensure completeness
-
-BIAS MITIGATION STRATEGIES:
-- Add 30% buffer to initial time estimates (Planning Fallacy)
-- Include risk assessment in each phase (Recency Bias)
-- Question whether each phase truly adds MVP value (Sunk Cost)
-- Include explicit "unknown unknowns" time (Optimism Bias)
-
-PHASE REQUIREMENTS:
-1. Start with the 6 core phases as your foundation
-2. ADD custom phases if the project requires them (e.g., if it's an AI project, add "AI Prompt Tuning")
-3. Each phase description MUST be specifically tailored to the actual project:
-   - Reference specific features, technologies, and goals from the README
-   - Use the actual project name and terminology
-   - Describe concrete tasks that relate to the specific business idea
-   - Mention specific integrations, data sources, or systems identified
-   - Address the specific problems or needs the project aims to solve
-
-PROJECT CONTEXT:
-Domain: {project_data.get('domain', 'general')}
-Key features: {', '.join(project_data.get('features', [])) if project_data.get('features') else 'See README below'}
-Technologies: {', '.join(project_data.get('techStack', [])) if project_data.get('techStack') else 'See README below'}
-
+PROJECT: {project_data.get('title', 'Software Project')}
+DOMAIN: {project_data.get('domain', 'general')}
 README CONTENT:
 {project_data.get('rawContent', '')}
 
-PHASE GENERATION RULES:
-1. Generate 6-10 phases total (6 core + any needed custom phases)
-2. Each phase should represent 2-4 weeks of work
-3. Phases should follow logical progression from idea to production
-4. Include specific roles needed for each phase based on the project's technical requirements
-5. Make phase titles and descriptions highly specific to this project
+Each phase description MUST include ALL 7 sections:
+**PHASE PURPOSE & OBJECTIVES:** - Core mission and strategic objectives
+**PROJECT ADVANCEMENT IMPACT:** - How this advances the project
+**SPECIFIC PROJECT CONTEXT:** - Reference actual features/tech from README
+**DELIVERABLES & SUCCESS CRITERIA:** - Measurable outputs and acceptance criteria
+**STAKEHOLDER VALUE:** - Value created for users and business impact
+**TECHNICAL CONTEXT & APPROACH:** - Technical decisions and architectural patterns
+**RISK FACTORS & MITIGATION:** - Potential blockers and mitigation strategies
 
-Return a JSON object with this structure:
+REQUIRED OUTPUT FORMAT:
 {{
   "phases": [
     {{
-      "id": "research-discovery",
-      "title": "📚 Research & Discovery - [Specific Project Focus]",
-      "description": "SPECIFIC description mentioning actual project features and goals...",
-      "suggestedRoles": ["Product Owner", "UX Researcher", "Domain Expert"]
-    }},
-    {{
-      "id": "planning-design",
-      "title": "🧐 Planning & Design - [Specific Architecture/UX Focus]",
-      "description": "Define MVP scope for [specific features], design [specific UI components]...",
-      "suggestedRoles": ["System Architect", "UX Designer", "Tech Lead"]
+      "id": "research-discovery-ourchants",
+      "title": "📚 Research & Discovery - Song Data Requirements Analysis",
+      "description": "**PHASE PURPOSE & OBJECTIVES:**\\nDefine comprehensive song data requirements and establish foundational understanding of music metadata management needs. This phase exists to prevent costly rework by thoroughly understanding the domain before implementation begins.\\n\\n**PROJECT ADVANCEMENT IMPACT:**\\nAdvances project from concept to validated requirements with clear data models. Unlocks ability to design appropriate database schemas and API contracts for subsequent phases.\\n\\n**SPECIFIC PROJECT CONTEXT:**\\nAnalyze OurChants' song data model requirements including id, name, artist, album, release_date, genre, duration_in_seconds fields. Research music metadata standards and integration needs with existing Python dataclass implementation.\\n\\n**DELIVERABLES & SUCCESS CRITERIA:**\\nComplete requirements document, validated data dictionary, stakeholder interview notes, competitive analysis report, and technical constraints documentation.\\n\\n**STAKEHOLDER VALUE:**\\nEnsures the final system meets actual user needs for song data management and prevents feature gaps that would require expensive post-launch fixes.\\n\\n**TECHNICAL CONTEXT & APPROACH:**\\nLeverage existing Python dataclass foundation, research music industry metadata standards like ID3, analyze pytest testing patterns, and evaluate database design options.\\n\\n**RISK FACTORS & MITIGATION:**\\nRisk of incomplete requirements leading to rework. Mitigate through thorough stakeholder interviews and prototype validation sessions.",
+      "suggestedRoles": ["Product Manager", "Domain Expert", "Data Architect"]
     }}
-    // ... continue with all phases
   ]
 }}
 
-Remember: Phases are GitHub milestones that will contain multiple epics and issues. Make them substantial and meaningful!
-
-## 🧠 META-STRATEGY VALIDATION
-
-Before finalizing, validate each phase against:
-
-**Start from First Principles:**
-- What does the user need? (not what we think they need)
-- What outcomes are required? (measurable results)
-- What constraints exist? (time, budget, tech debt)
-- What is the minimum set of validated deliverables?
-
-**Validate Each Phase With:**
-- **Traceability**: Will epics clearly support this milestone's goals?
-- **Visibility**: Can a new team member understand this phase in 15 minutes?
-- **Risk Disclosure**: Are assumptions and risks explicit in the description?"""
+Generate 6-8 phases with unique IDs and comprehensive descriptions. Make titles specific to this project. Return ONLY the JSON."""
     
-    def _extract_phases(self, response_text: str) -> List[Dict[str, any]]:
-        """Extract phases from the AI response."""
-        # Try to find JSON in the response
-        json_match = re.search(r'\{[\s\S]*\}', response_text)
-        if not json_match:
-            raise ValueError("No JSON found in response")
-        
-        try:
-            # First attempt: direct JSON parsing
-            parsed = json.loads(json_match.group(0))
-            validated = PhasesResponse(**parsed)
-            return [phase.dict() for phase in validated.phases]
-        except (json.JSONDecodeError, ValidationError):
-            # Second attempt: extract from code block
-            code_block_match = re.search(r'```(?:json)?\s*(\{[\s\S]*?\})\s*```', response_text)
-            if code_block_match:
-                try:
-                    parsed = json.loads(code_block_match.group(1))
-                    validated = PhasesResponse(**parsed)
-                    return [phase.dict() for phase in validated.phases]
-                except (json.JSONDecodeError, ValidationError) as e:
-                    raise ValueError(f"Failed to parse phases: {str(e)}")
-            
-            raise ValueError("Failed to parse phases from response")
     
     def _calculate_due_dates(self, phases: List[Dict[str, any]], start_date: Optional[datetime] = None) -> List[Dict[str, any]]:
         """Calculate due dates for milestones (14 days per phase)."""

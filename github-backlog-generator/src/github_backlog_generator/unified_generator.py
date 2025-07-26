@@ -1,6 +1,7 @@
 """Unified Generator - Creates phases with epics and tasks in a single LLM call."""
 
 import json
+import os
 import re
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional
@@ -42,7 +43,7 @@ class UnifiedGenerator:
                 prompt = self._build_prompt(phase_number, phase_name, project_data)
                 
                 message = self.anthropic.messages.create(
-                    model="claude-3-sonnet-20240229",
+                    model=os.getenv('GITHUB_BACKLOG_MODEL', 'claude-3-5-sonnet-20241022'),
                     max_tokens=4000,
                     temperature=0.7,
                     messages=[{
@@ -164,11 +165,14 @@ Remember: Be specific to the actual project described above. Reference real feat
         if not json_text:
             raise ValueError("No JSON found in response")
         
+        # Clean the JSON text to handle control characters and formatting issues
+        json_text = self._clean_json_text(json_text)
+        
         # Parse and validate
         try:
             parsed = json.loads(json_text)
             validated = Phase(**parsed)
-            return validated.dict()
+            return validated.model_dump() if hasattr(validated, 'model_dump') else validated.dict()
         except json.JSONDecodeError as e:
             # Try to fix common JSON errors
             # Remove trailing commas
@@ -178,4 +182,19 @@ Remember: Be specific to the actual project described above. Reference real feat
             # Try again
             parsed = json.loads(json_text)
             validated = Phase(**parsed)
-            return validated.dict()
+            return validated.model_dump() if hasattr(validated, 'model_dump') else validated.dict()
+    
+    def _clean_json_text(self, json_text: str) -> str:
+        """Clean JSON text to handle control characters and common formatting issues."""
+        # Remove control characters that can break JSON parsing
+        # Keep only printable characters, newlines, tabs, and carriage returns
+        import string
+        printable_chars = string.printable
+        cleaned = ''.join(char for char in json_text if char in printable_chars)
+        
+        # Fix common JSON formatting issues
+        # Remove trailing commas before closing braces/brackets
+        cleaned = re.sub(r',\s*}', '}', cleaned)
+        cleaned = re.sub(r',\s*]', ']', cleaned)
+        
+        return cleaned

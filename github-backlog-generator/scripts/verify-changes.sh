@@ -26,22 +26,27 @@ else
     echo "❌ Global command 'github-backlog' not found"
 fi
 
-# Check if modular CLI module exists
-if [ -f "src/github_backlog_generator/cli_modular.py" ]; then
-    echo "✅ Modular CLI module exists"
+# Check if unified CLI module exists
+if [ -f "src/github_backlog_generator/cli_unified.py" ]; then
+    echo "✅ Unified CLI module exists"
     # Check for key features
-    if grep -q "class BacklogManager" src/github_backlog_generator/cli_modular.py; then
+    if grep -q "class BacklogManager" src/github_backlog_generator/cli_unified.py; then
         echo "✅ BacklogManager class found"
     else
         echo "❌ BacklogManager class not found"
     fi
-    if grep -q "def init(" src/github_backlog_generator/cli_modular.py && grep -q "def milestones(" src/github_backlog_generator/cli_modular.py; then
-        echo "✅ Modular commands (init, milestones) found"
+    if grep -q "def init(" src/github_backlog_generator/cli_unified.py && grep -q "def milestones(" src/github_backlog_generator/cli_unified.py; then
+        echo "✅ Unified commands (init, milestones) found"
     else
-        echo "❌ Modular commands not found"
+        echo "❌ Unified commands not found"
+    fi
+    if grep -q "\-\-cost" src/github_backlog_generator/cli_unified.py && grep -q "\-\-time" src/github_backlog_generator/cli_unified.py; then
+        echo "✅ Cost and timing tracking options found"
+    else
+        echo "❌ Cost and timing tracking options not found"
     fi
 else
-    echo "❌ Modular CLI module not found"
+    echo "❌ Unified CLI module not found"
     exit 1
 fi
 

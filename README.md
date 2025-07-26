@@ -54,14 +54,27 @@ pip install ./github-backlog-generator
    export GITHUB_TOKEN="your-github-token-with-repo-scope"
    ```
 
-2. **Generate a backlog**:
+2. **Initialize your project**:
    ```bash
-   github-backlog generate https://github.com/owner/repo
+   github-backlog init https://github.com/owner/repo
    ```
 
-3. **Choose a phase** when prompted (1-8)
+3. **Create milestones** (optional):
+   ```bash
+   github-backlog milestones https://github.com/owner/repo
+   ```
 
-4. **Review and confirm** the generated plan
+4. **Generate epics and tasks**:
+   ```bash
+   github-backlog generate --phase 1 https://github.com/owner/repo
+   # Or generate all epics first:
+   github-backlog generate --all-epics https://github.com/owner/repo
+   ```
+
+5. **Check project status**:
+   ```bash
+   github-backlog status https://github.com/owner/repo
+   ```
 
 That's it! Check your GitHub repository for the newly created milestone, epic, and task issues.
 
@@ -80,28 +93,51 @@ The tool generates backlogs for 8 standard development phases:
 
 ## 🛠️ Advanced Usage
 
-### Dry Run Mode
-Preview the generated content without creating GitHub issues:
+### Cost and Timing Tracking
+Track API costs and execution time:
 ```bash
-github-backlog generate https://github.com/owner/repo --dry-run
+# Track costs for any command
+github-backlog --cost init https://github.com/owner/repo
+github-backlog --cost generate --phase 1 https://github.com/owner/repo
+
+# Track timing for performance analysis
+github-backlog --time generate --all-epics https://github.com/owner/repo
+
+# Use both together
+github-backlog --cost --time status https://github.com/owner/repo
 ```
 
-### Export to JSON
-Save the generated phase for later use:
+### Modular Workflow
+Work with individual components:
 ```bash
-github-backlog generate https://github.com/owner/repo --output phase.json
+# Initialize project structure
+github-backlog init https://github.com/owner/repo
+
+# Create GitHub milestones for all phases
+github-backlog milestones https://github.com/owner/repo
+
+# Generate epics for specific phase
+github-backlog generate --phase 2 https://github.com/owner/repo
+
+# Generate all epics at once
+github-backlog generate --all-epics https://github.com/owner/repo
+
+# Generate issues for specific epic
+github-backlog generate --epic "Epic Title" https://github.com/owner/repo
+
+# Check current status
+github-backlog status https://github.com/owner/repo
 ```
 
-### Process from JSON
-Create GitHub issues from a previously exported phase:
+### Model Selection
+Choose different Claude models for cost optimization:
 ```bash
-github-backlog process phase.json --repo owner/repo
-```
+# Use faster, cheaper model for development
+export GITHUB_BACKLOG_MODEL=claude-3-5-haiku-20241022
+github-backlog init https://github.com/owner/repo
 
-### Specify Phase Directly
-Skip the interactive prompt:
-```bash
-github-backlog generate https://github.com/owner/repo --phase 3
+# Check current pricing
+github-backlog pricing
 ```
 
 ## 🔧 Configuration
