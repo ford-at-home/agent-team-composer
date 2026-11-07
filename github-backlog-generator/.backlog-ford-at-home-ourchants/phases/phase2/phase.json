@@ -1,0 +1,12 @@
+{
+  "number": 2,
+  "title": "\ud83e\uddd0 Planning & Design - Data Architecture & AWS Infrastructure",
+  "description": "Design PostgreSQL schema optimized for song queries, plan AWS infrastructure using CDK, define Python class structure using dataclasses. Create technical specifications for data validation rules, testing strategy, and CI/CD pipeline. Design error handling for edge cases like missing durations or invalid release dates.",
+  "id": "planning-design",
+  "dueDate": "2025-08-23T00:58:09.775705",
+  "suggestedRoles": [
+    "System Architect",
+    "AWS Solutions Architect",
+    "Python Tech Lead"
+  ]
+}

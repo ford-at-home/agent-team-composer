@@ -1,0 +1,42 @@
+# Label configuration for GitHub
+# Use with: https://github.com/marketplace/actions/github-labeler
+
+- name: breaking-change
+  color: "D73A4A"
+  description: "Breaking changes that require major version bump"
+
+- name: feature
+  color: "0075CA"
+  description: "New feature that requires minor version bump"
+
+- name: minor
+  color: "0075CA"
+  description: "Minor version bump"
+
+- name: major
+  color: "D73A4A"  
+  description: "Major version bump"
+
+- name: skip-release
+  color: "CCCCCC"
+  description: "Skip automatic release for this PR"
+
+- name: bug
+  color: "D73A4A"
+  description: "Something isn't working"
+
+- name: documentation
+  color: "0075CA"
+  description: "Improvements or additions to documentation"
+
+- name: dependencies
+  color: "0366D6"
+  description: "Pull requests that update a dependency file"
+
+- name: automated
+  color: "0E8A16"
+  description: "Automated PR from GitHub Actions"
+
+- name: release
+  color: "00FF00"
+  description: "Release-related PR"

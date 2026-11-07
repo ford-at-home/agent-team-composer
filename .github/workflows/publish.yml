@@ -1,0 +1,169 @@
+name: Publish to NPM
+
+# This workflow is for MANUAL releases only
+# Automatic releases on PR merge use auto-release.yml
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version type (patch, minor, major)'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      dry-run:
+        description: 'Dry run (do not publish)'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  packages: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PAT }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18.x'
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.RELEASE_PAT }}@github.com/ford-at-home/agent-team-composer.git
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: |
+          npm run typecheck
+          npm run test:once
+
+      - name: Build package
+        run: npm run build:npm
+
+      - name: Validate build
+        run: |
+          npm run validate:build
+          npm run test:build
+
+      - name: Check if PR merge or direct push
+        id: check-pr
+        run: |
+          # Check if this is a PR merge by looking at the commit message
+          if [[ "${{ github.event.head_commit.message }}" =~ "Merge pull request" ]]; then
+            echo "is_pr_merge=true" >> $GITHUB_OUTPUT
+            # Extract PR number and check labels via API if needed
+          else
+            echo "is_pr_merge=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine version type
+        id: version-type
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            # For automatic releases on merge to main, default to patch
+            # You can enhance this to read from PR labels or commit message
+            echo "version=patch" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check and increment version
+        if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
+        run: |
+          # Get current version and check if we need to bump
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "Current version: $CURRENT_VERSION"
+
+          # Check if this version tag already exists
+          if git ls-remote --tags origin | grep -q "refs/tags/v${CURRENT_VERSION}"; then
+            echo "Version v${CURRENT_VERSION} already released, checking if we need a new version"
+            # Pull latest to ensure we have all recent changes
+            git pull origin main
+            # Now bump the version
+            npm version ${{ steps.version-type.outputs.version }} --no-git-tag-version
+          else
+            echo "Version v${CURRENT_VERSION} not yet released, bumping version"
+            npm version ${{ steps.version-type.outputs.version }} --no-git-tag-version
+          fi
+
+          echo "NEW_VERSION=$(node -p "require('./package.json').version")" >> $GITHUB_ENV
+
+      - name: Verify package
+        run: |
+          npm pack --dry-run
+          echo "Package contents:"
+          npm pack --dry-run --json | jq -r '.files[].path' | sort
+
+      - name: Publish to NPM (dry run)
+        if: github.event.inputs.dry-run == 'true'
+        run: npm publish --dry-run
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to NPM
+        if: github.event.inputs.dry-run != 'true'
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Commit and push version changes
+        if: github.event.inputs.dry-run != 'true'
+        run: |
+          # Only push changes if NPM publish succeeded
+          git add package.json package-lock.json
+          git commit -m "chore: release v${{ env.NEW_VERSION }} [skip ci]"
+
+          # Create and push tag
+          git tag v${{ env.NEW_VERSION }}
+
+          # Pull latest changes before pushing to handle concurrent workflows
+          git pull --rebase origin main
+          git push origin main
+          git push origin v${{ env.NEW_VERSION }}
+
+      - name: Create GitHub Release
+        if: github.event.inputs.dry-run != 'true'
+        uses: ncipollo/release-action@v1
+        with:
+          allowUpdates: true
+          skipIfReleaseExists: true
+          tag: v${{ env.NEW_VERSION }}
+          name: Release v${{ env.NEW_VERSION }}
+          body: |
+            ## What's Changed
+
+            See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details.
+
+            ## Installation
+
+            ```bash
+            npm install -g agent-team-composer@${{ env.NEW_VERSION }}
+            ```
+
+            Or use directly with npx:
+            ```bash
+            npx agent-team-composer@${{ env.NEW_VERSION }} init
+            ```
+          draft: false
+          prerelease: false
+          token: ${{ secrets.RELEASE_PAT }}

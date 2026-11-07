@@ -1,0 +1,78 @@
+{
+ "Resources": {
+  "MVPBacklogRepository1F4D7CC7": {
+   "Type": "AWS::ECR::Repository",
+   "Properties": {
+    "ImageScanningConfiguration": {
+     "ScanOnPush": true
+    },
+    "LifecyclePolicy": {
+     "LifecyclePolicyText": "{\"rules\":[{\"rulePriority\":1,\"description\":\"Keep only 10 most recent images\",\"selection\":{\"tagStatus\":\"any\",\"countType\":\"imageCountMoreThan\",\"countNumber\":10},\"action\":{\"type\":\"expire\"}}]}"
+    },
+    "RepositoryName": "mvp-backlog-cli",
+    "Tags": [
+     {
+      "Key": "component",
+      "Value": "ecr"
+     },
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "ECRRepositoryStack/MVPBacklogRepository/Resource"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/42PS2vCQBSFf4t3KZOpRugiW1eF0oa4lFCuk2u9dR4yD+0w5L+XKKLLrg6cw8fHqWW9eJWLGV5CpYZjpXknyyaiOgq8hC9SXpaOTi5wdD5vC7DBb9ootJ+2TeEATfSJBGjek8pKU5c0BWi2BQYKyvMpsrPQwBwEGPx9m/C1SzZeu7EX4Mm4M+rWaVYZmomL3mWYlrv4Aw3dAFEAh+H9Wfd/m7gOc+jHXqz39nFsHEWb48HZl5Vc1nI1+wnMlU82siHZ3fIPqQTuTywBAAA="
+   },
+   "Metadata": {
+    "aws:cdk:path": "ECRRepositoryStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

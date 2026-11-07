@@ -1,0 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Development
+.git
+.gitignore
+.env
+.env.local
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Documentation
+docs/
+*.md
+!README.md
+
+# Tests
+tests/
+test/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Terraform and infrastructure
+terraform/
+*.tf
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Node.js (if any frontend assets)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Misc
+.dockerignore
+Dockerfile
+docker-compose.yml
+Makefile

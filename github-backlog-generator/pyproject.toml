@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "github-backlog-generator"
+version = "1.0.0"
+authors = [
+    {name = "Ford", email = "ford@flyingpig.ai"},
+]
+description = "CLI tool to transform GitHub repo READMEs into ordered project backlogs"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Version Control :: Git",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+]
+keywords = ["github", "backlog", "project-management", "cli", "developer-tools"]
+dependencies = [
+    "anthropic>=0.20.0",
+    "click>=8.1.7",
+    "rich>=13.7.0",
+    "python-dotenv>=1.0.0",
+    "PyGithub>=2.1.1",
+    "pydantic>=2.5.0",
+    "requests>=2.31.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ford-at-home/agent-team-composer"
+"Bug Tracker" = "https://github.com/ford-at-home/agent-team-composer/issues"
+Repository = "https://github.com/ford-at-home/agent-team-composer"
+Documentation = "https://github.com/ford-at-home/agent-team-composer/tree/main/github-backlog-generator#readme"
+
+[project.scripts]
+github-backlog = "github_backlog_generator.cli:cli"
+github-backlog-generator = "github_backlog_generator.cli:cli"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["github_backlog_generator*"]
+exclude = ["tests*"]

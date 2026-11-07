@@ -1,0 +1,1164 @@
+{
+ "Resources": {
+  "MVPVPC84893ABB": {
+   "Type": "AWS::EC2::VPC",
+   "Properties": {
+    "CidrBlock": "10.0.0.0/16",
+    "EnableDnsHostnames": true,
+    "EnableDnsSupport": true,
+    "InstanceTenancy": "default",
+    "Tags": [
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "Name",
+      "Value": "MVPBacklogBatchStack/MVPVPC"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/Resource"
+   }
+  },
+  "MVPVPCPublicSubnetSubnet1SubnetDFB39D14": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "us-east-1a",
+    "CidrBlock": "10.0.0.0/24",
+    "MapPublicIpOnLaunch": true,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "PublicSubnet"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Public"
+     },
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "Name",
+      "Value": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet1"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MVPVPC84893ABB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet1/Subnet"
+   }
+  },
+  "MVPVPCPublicSubnetSubnet1RouteTableE913749C": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "Name",
+      "Value": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet1"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MVPVPC84893ABB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet1/RouteTable"
+   }
+  },
+  "MVPVPCPublicSubnetSubnet1RouteTableAssociation2D38BA69": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "MVPVPCPublicSubnetSubnet1RouteTableE913749C"
+    },
+    "SubnetId": {
+     "Ref": "MVPVPCPublicSubnetSubnet1SubnetDFB39D14"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet1/RouteTableAssociation"
+   }
+  },
+  "MVPVPCPublicSubnetSubnet1DefaultRouteF89AE433": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "GatewayId": {
+     "Ref": "MVPVPCIGWB99EA12B"
+    },
+    "RouteTableId": {
+     "Ref": "MVPVPCPublicSubnetSubnet1RouteTableE913749C"
+    }
+   },
+   "DependsOn": [
+    "MVPVPCVPCGWE66973DE"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet1/DefaultRoute"
+   }
+  },
+  "MVPVPCPublicSubnetSubnet1EIPA422D0C5": {
+   "Type": "AWS::EC2::EIP",
+   "Properties": {
+    "Domain": "vpc",
+    "Tags": [
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "Name",
+      "Value": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet1"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet1/EIP"
+   }
+  },
+  "MVPVPCPublicSubnetSubnet1NATGatewayE0D1F138": {
+   "Type": "AWS::EC2::NatGateway",
+   "Properties": {
+    "AllocationId": {
+     "Fn::GetAtt": [
+      "MVPVPCPublicSubnetSubnet1EIPA422D0C5",
+      "AllocationId"
+     ]
+    },
+    "SubnetId": {
+     "Ref": "MVPVPCPublicSubnetSubnet1SubnetDFB39D14"
+    },
+    "Tags": [
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "Name",
+      "Value": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet1"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ]
+   },
+   "DependsOn": [
+    "MVPVPCPublicSubnetSubnet1DefaultRouteF89AE433",
+    "MVPVPCPublicSubnetSubnet1RouteTableAssociation2D38BA69"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet1/NATGateway"
+   }
+  },
+  "MVPVPCPublicSubnetSubnet2Subnet3F0BE142": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "us-east-1b",
+    "CidrBlock": "10.0.1.0/24",
+    "MapPublicIpOnLaunch": true,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "PublicSubnet"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Public"
+     },
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "Name",
+      "Value": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet2"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MVPVPC84893ABB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet2/Subnet"
+   }
+  },
+  "MVPVPCPublicSubnetSubnet2RouteTable527655BF": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "Name",
+      "Value": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet2"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MVPVPC84893ABB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet2/RouteTable"
+   }
+  },
+  "MVPVPCPublicSubnetSubnet2RouteTableAssociationEB8D3324": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "MVPVPCPublicSubnetSubnet2RouteTable527655BF"
+    },
+    "SubnetId": {
+     "Ref": "MVPVPCPublicSubnetSubnet2Subnet3F0BE142"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet2/RouteTableAssociation"
+   }
+  },
+  "MVPVPCPublicSubnetSubnet2DefaultRouteD0807081": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "GatewayId": {
+     "Ref": "MVPVPCIGWB99EA12B"
+    },
+    "RouteTableId": {
+     "Ref": "MVPVPCPublicSubnetSubnet2RouteTable527655BF"
+    }
+   },
+   "DependsOn": [
+    "MVPVPCVPCGWE66973DE"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PublicSubnetSubnet2/DefaultRoute"
+   }
+  },
+  "MVPVPCPrivateSubnetSubnet1Subnet1B493B77": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "us-east-1a",
+    "CidrBlock": "10.0.2.0/24",
+    "MapPublicIpOnLaunch": false,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "PrivateSubnet"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Private"
+     },
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "Name",
+      "Value": "MVPBacklogBatchStack/MVPVPC/PrivateSubnetSubnet1"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MVPVPC84893ABB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PrivateSubnetSubnet1/Subnet"
+   }
+  },
+  "MVPVPCPrivateSubnetSubnet1RouteTable4C28AE7F": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "Name",
+      "Value": "MVPBacklogBatchStack/MVPVPC/PrivateSubnetSubnet1"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MVPVPC84893ABB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PrivateSubnetSubnet1/RouteTable"
+   }
+  },
+  "MVPVPCPrivateSubnetSubnet1RouteTableAssociation1535ED2C": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "MVPVPCPrivateSubnetSubnet1RouteTable4C28AE7F"
+    },
+    "SubnetId": {
+     "Ref": "MVPVPCPrivateSubnetSubnet1Subnet1B493B77"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PrivateSubnetSubnet1/RouteTableAssociation"
+   }
+  },
+  "MVPVPCPrivateSubnetSubnet1DefaultRoute1C583391": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "NatGatewayId": {
+     "Ref": "MVPVPCPublicSubnetSubnet1NATGatewayE0D1F138"
+    },
+    "RouteTableId": {
+     "Ref": "MVPVPCPrivateSubnetSubnet1RouteTable4C28AE7F"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PrivateSubnetSubnet1/DefaultRoute"
+   }
+  },
+  "MVPVPCPrivateSubnetSubnet2Subnet6FA38775": {
+   "Type": "AWS::EC2::Subnet",
+   "Properties": {
+    "AvailabilityZone": "us-east-1b",
+    "CidrBlock": "10.0.3.0/24",
+    "MapPublicIpOnLaunch": false,
+    "Tags": [
+     {
+      "Key": "aws-cdk:subnet-name",
+      "Value": "PrivateSubnet"
+     },
+     {
+      "Key": "aws-cdk:subnet-type",
+      "Value": "Private"
+     },
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "Name",
+      "Value": "MVPBacklogBatchStack/MVPVPC/PrivateSubnetSubnet2"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MVPVPC84893ABB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PrivateSubnetSubnet2/Subnet"
+   }
+  },
+  "MVPVPCPrivateSubnetSubnet2RouteTable600957FA": {
+   "Type": "AWS::EC2::RouteTable",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "Name",
+      "Value": "MVPBacklogBatchStack/MVPVPC/PrivateSubnetSubnet2"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MVPVPC84893ABB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PrivateSubnetSubnet2/RouteTable"
+   }
+  },
+  "MVPVPCPrivateSubnetSubnet2RouteTableAssociationD0DA3C83": {
+   "Type": "AWS::EC2::SubnetRouteTableAssociation",
+   "Properties": {
+    "RouteTableId": {
+     "Ref": "MVPVPCPrivateSubnetSubnet2RouteTable600957FA"
+    },
+    "SubnetId": {
+     "Ref": "MVPVPCPrivateSubnetSubnet2Subnet6FA38775"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PrivateSubnetSubnet2/RouteTableAssociation"
+   }
+  },
+  "MVPVPCPrivateSubnetSubnet2DefaultRouteE60BB1B0": {
+   "Type": "AWS::EC2::Route",
+   "Properties": {
+    "DestinationCidrBlock": "0.0.0.0/0",
+    "NatGatewayId": {
+     "Ref": "MVPVPCPublicSubnetSubnet1NATGatewayE0D1F138"
+    },
+    "RouteTableId": {
+     "Ref": "MVPVPCPrivateSubnetSubnet2RouteTable600957FA"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/PrivateSubnetSubnet2/DefaultRoute"
+   }
+  },
+  "MVPVPCIGWB99EA12B": {
+   "Type": "AWS::EC2::InternetGateway",
+   "Properties": {
+    "Tags": [
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "Name",
+      "Value": "MVPBacklogBatchStack/MVPVPC"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/IGW"
+   }
+  },
+  "MVPVPCVPCGWE66973DE": {
+   "Type": "AWS::EC2::VPCGatewayAttachment",
+   "Properties": {
+    "InternetGatewayId": {
+     "Ref": "MVPVPCIGWB99EA12B"
+    },
+    "VpcId": {
+     "Ref": "MVPVPC84893ABB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/VPCGW"
+   }
+  },
+  "MVPVPCRestrictDefaultSecurityGroupCustomResource495521E4": {
+   "Type": "Custom::VpcRestrictDefaultSG",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E",
+      "Arn"
+     ]
+    },
+    "DefaultSecurityGroupId": {
+     "Fn::GetAtt": [
+      "MVPVPC84893ABB",
+      "DefaultSecurityGroup"
+     ]
+    },
+    "Account": "984906149037"
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPVPC/RestrictDefaultSecurityGroupCustomResource/Default"
+   }
+  },
+  "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ],
+    "Policies": [
+     {
+      "PolicyName": "Inline",
+      "PolicyDocument": {
+       "Version": "2012-10-17",
+       "Statement": [
+        {
+         "Effect": "Allow",
+         "Action": [
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress"
+         ],
+         "Resource": [
+          {
+           "Fn::Join": [
+            "",
+            [
+             "arn:aws:ec2:us-east-1:984906149037:security-group/",
+             {
+              "Fn::GetAtt": [
+               "MVPVPC84893ABB",
+               "DefaultSecurityGroup"
+              ]
+             }
+            ]
+           ]
+          }
+         ]
+        }
+       ]
+      }
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Role"
+   }
+  },
+  "CustomVpcRestrictDefaultSGCustomResourceProviderHandlerDC833E5E": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-984906149037-us-east-1",
+     "S3Key": "7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "__entrypoint__.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Description": "Lambda function for removing all inbound/outbound rules from the VPC default security group"
+   },
+   "DependsOn": [
+    "CustomVpcRestrictDefaultSGCustomResourceProviderRole26592FE0"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/Custom::VpcRestrictDefaultSGCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.7fa1e366ee8a9ded01fc355f704cff92bfd179574e6f9cfee800a3541df1b200",
+    "aws:asset:property": "Code"
+   }
+  },
+  "BatchJobSecurityGroup89B9374F": {
+   "Type": "AWS::EC2::SecurityGroup",
+   "Properties": {
+    "GroupDescription": "Security group for MVP Batch jobs",
+    "SecurityGroupEgress": [
+     {
+      "CidrIp": "0.0.0.0/0",
+      "Description": "Allow all outbound traffic by default",
+      "IpProtocol": "-1"
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ],
+    "VpcId": {
+     "Ref": "MVPVPC84893ABB"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/BatchJobSecurityGroup/Resource"
+   }
+  },
+  "MVPLogGroup6D7474D8": {
+   "Type": "AWS::Logs::LogGroup",
+   "Properties": {
+    "LogGroupName": "/mvp-backlog",
+    "RetentionInDays": 14,
+    "Tags": [
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ]
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPLogGroup/Resource"
+   }
+  },
+  "MVPResultsBucket4E84ED34": {
+   "Type": "AWS::S3::Bucket",
+   "Properties": {
+    "LifecycleConfiguration": {
+     "Rules": [
+      {
+       "ExpirationInDays": 30,
+       "Status": "Enabled"
+      }
+     ]
+    },
+    "Tags": [
+     {
+      "Key": "aws-cdk:auto-delete-objects",
+      "Value": "true"
+     },
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ],
+    "VersioningConfiguration": {
+     "Status": "Enabled"
+    }
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPResultsBucket/Resource"
+   }
+  },
+  "MVPResultsBucketPolicy3DBFEC67": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "MVPResultsBucket4E84ED34"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:DeleteObject*",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:PutBucketPolicy"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+          "Arn"
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "MVPResultsBucket4E84ED34",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "MVPResultsBucket4E84ED34",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPResultsBucket/Policy/Resource"
+   }
+  },
+  "MVPResultsBucketAutoDeleteObjectsCustomResource8E6A0E7B": {
+   "Type": "Custom::S3AutoDeleteObjects",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "MVPResultsBucket4E84ED34"
+    }
+   },
+   "DependsOn": [
+    "MVPResultsBucketPolicy3DBFEC67"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPResultsBucket/AutoDeleteObjectsCustomResource/Default"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ]
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-984906149037-us-east-1",
+     "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x",
+    "Description": {
+     "Fn::Join": [
+      "",
+      [
+       "Lambda function for auto-deleting objects in ",
+       {
+        "Ref": "MVPResultsBucket4E84ED34"
+       },
+       " S3 bucket."
+      ]
+     ]
+    }
+   },
+   "DependsOn": [
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6",
+    "aws:asset:property": "Code"
+   }
+  },
+  "JobExecutionRoleF19B4342": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": [
+         "batch.amazonaws.com",
+         "ecs-tasks.amazonaws.com"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "RoleName": "MVPBacklogBatchRole",
+    "Tags": [
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/JobExecutionRole/Resource"
+   }
+  },
+  "JobExecutionRoleDefaultPolicyE87C0721": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": "s3:PutObject",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::Join": [
+         "",
+         [
+          {
+           "Fn::GetAtt": [
+            "MVPResultsBucket4E84ED34",
+            "Arn"
+           ]
+          },
+          "/*"
+         ]
+        ]
+       }
+      },
+      {
+       "Action": [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:BatchGetImage",
+        "ecr:GetAuthorizationToken",
+        "ecr:GetDownloadUrlForLayer",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": "secretsmanager:GetSecretValue",
+       "Effect": "Allow",
+       "Resource": [
+        "arn:aws:secretsmanager:us-east-1:984906149037:secret:anthropic_key-47iAE6",
+        "arn:aws:secretsmanager:us-east-1:984906149037:secret:github_token-sIuriy",
+        "arn:aws:secretsmanager:us-east-1:984906149037:secret:openai_key-PkoBXY"
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "JobExecutionRoleDefaultPolicyE87C0721",
+    "Roles": [
+     {
+      "Ref": "JobExecutionRoleF19B4342"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/JobExecutionRole/DefaultPolicy/Resource"
+   }
+  },
+  "BatchServiceRole57930367": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "batch.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSBatchServiceRole"
+       ]
+      ]
+     }
+    ],
+    "Tags": [
+     {
+      "Key": "env",
+      "Value": "dev"
+     },
+     {
+      "Key": "project",
+      "Value": "mvp-backlog"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/BatchServiceRole/Resource"
+   }
+  },
+  "MVPFargateEnv": {
+   "Type": "AWS::Batch::ComputeEnvironment",
+   "Properties": {
+    "ComputeEnvironmentName": "MVPFargateEnv",
+    "ComputeResources": {
+     "MaxvCpus": 16,
+     "SecurityGroupIds": [
+      {
+       "Fn::GetAtt": [
+        "BatchJobSecurityGroup89B9374F",
+        "GroupId"
+       ]
+      }
+     ],
+     "Subnets": [
+      {
+       "Ref": "MVPVPCPrivateSubnetSubnet1Subnet1B493B77"
+      },
+      {
+       "Ref": "MVPVPCPrivateSubnetSubnet2Subnet6FA38775"
+      }
+     ],
+     "Type": "FARGATE"
+    },
+    "ServiceRole": {
+     "Fn::GetAtt": [
+      "BatchServiceRole57930367",
+      "Arn"
+     ]
+    },
+    "Tags": {
+     "env": "dev",
+     "project": "mvp-backlog"
+    },
+    "Type": "MANAGED"
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPFargateEnv"
+   }
+  },
+  "MVPJobQueue": {
+   "Type": "AWS::Batch::JobQueue",
+   "Properties": {
+    "ComputeEnvironmentOrder": [
+     {
+      "ComputeEnvironment": {
+       "Ref": "MVPFargateEnv"
+      },
+      "Order": 1
+     }
+    ],
+    "JobQueueName": "MVPBacklogQueue",
+    "Priority": 1,
+    "Tags": {
+     "env": "dev",
+     "project": "mvp-backlog"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPJobQueue"
+   }
+  },
+  "MVPJobDef": {
+   "Type": "AWS::Batch::JobDefinition",
+   "Properties": {
+    "ContainerProperties": {
+     "Command": [
+      "bash",
+      "-c",
+      "\n                    echo \"=== GitHub Backlog Generator Starting ===\"\n                    echo \"Environment REPO: $REPO\"\n                    \n                    # Debug: Show all AWS Batch related environment variables\n                    echo \"=== AWS Batch Environment Variables ===\"\n                    env | grep -E \"^AWS_BATCH_\" | sort || echo \"No AWS_BATCH_ variables found\"\n                    echo \"=== End AWS Batch Variables ===\"\n                    \n                    # Fix GitHub token format if it's JSON\n                    # Secrets Manager sometimes returns JSON format, we need the raw value\n                    if [[ $GITHUB_TOKEN == \"{\"* ]]; then\n                        echo \"Parsing JSON GitHub token format...\"\n                        export GITHUB_TOKEN=$(echo \"$GITHUB_TOKEN\" | python3 -c \"import sys,json; print(json.loads(sys.stdin.read()).get('github_token', ''))\" 2>/dev/null || echo \"$GITHUB_TOKEN\")\n                    fi\n                    echo \"GitHub token configured: ${GITHUB_TOKEN:0:15}...\"\n                    \n                    # Fix Anthropic API key format if it's JSON\n                    if [[ $ANTHROPIC_API_KEY == \"{\"* ]]; then\n                        echo \"Parsing JSON Anthropic key format...\"\n                        export ANTHROPIC_API_KEY=$(echo \"$ANTHROPIC_API_KEY\" | python3 -c \"import sys,json; print(json.loads(sys.stdin.read()).get('anthropic_key', ''))\" 2>/dev/null || echo \"$ANTHROPIC_API_KEY\")\n                    fi\n                    echo \"Anthropic API key configured: ${ANTHROPIC_API_KEY:0:15}...\"\n                    \n                    echo \"Final REPO: $REPO\"\n                    echo \"=== Starting Complete Workflow ===\"\n                    \n                    # Execute the 4-step workflow to create a minimal backlog\n                    echo \"Step 1: Initialize project and generate phases...\"\n                    github-backlog-generator init \"$REPO\"\n                    \n                    echo \"Step 2: Create GitHub milestones from phases...\"\n                    github-backlog-generator create-milestones --repo \"$REPO\"\n                    \n                    echo \"Step 3: Create epics for phase 1...\"\n                    github-backlog-generator create-epics --repo \"$REPO\" -p 1\n                    \n                    echo \"Step 4: Create issues for first epic of first phase...\"\n                    github-backlog-generator create-issues --repo \"$REPO\" -p 1 -e 1\n                    \n                    echo \"=== Workflow Complete ===\"\n                    echo \"Summary: Generated phases, epics for phase 1, and issues for epic 1\"\n                    "
+     ],
+     "Environment": [
+      {
+       "Name": "REPO",
+       "Value": "mvp-builder-app/default-repo"
+      },
+      {
+       "Name": "PHASES",
+       "Value": "1"
+      },
+      {
+       "Name": "EPICS",
+       "Value": "1"
+      },
+      {
+       "Name": "ISSUES",
+       "Value": "3"
+      }
+     ],
+     "ExecutionRoleArn": {
+      "Fn::GetAtt": [
+       "JobExecutionRoleF19B4342",
+       "Arn"
+      ]
+     },
+     "Image": "984906149037.dkr.ecr.us-east-1.amazonaws.com/mvp-backlog-cli:latest",
+     "JobRoleArn": {
+      "Fn::GetAtt": [
+       "JobExecutionRoleF19B4342",
+       "Arn"
+      ]
+     },
+     "LogConfiguration": {
+      "LogDriver": "awslogs",
+      "Options": {
+       "awslogs-group": {
+        "Ref": "MVPLogGroup6D7474D8"
+       },
+       "awslogs-region": "us-east-1",
+       "awslogs-stream-prefix": "mvp"
+      }
+     },
+     "ResourceRequirements": [
+      {
+       "Type": "VCPU",
+       "Value": "1"
+      },
+      {
+       "Type": "MEMORY",
+       "Value": "2048"
+      }
+     ],
+     "Secrets": [
+      {
+       "Name": "GITHUB_TOKEN",
+       "ValueFrom": "arn:aws:secretsmanager:us-east-1:984906149037:secret:github_token-sIuriy"
+      },
+      {
+       "Name": "ANTHROPIC_API_KEY",
+       "ValueFrom": "arn:aws:secretsmanager:us-east-1:984906149037:secret:anthropic_key-47iAE6"
+      },
+      {
+       "Name": "OPENAI_API_KEY",
+       "ValueFrom": "arn:aws:secretsmanager:us-east-1:984906149037:secret:openai_key-PkoBXY"
+      }
+     ]
+    },
+    "JobDefinitionName": "MVPBacklogJob",
+    "Parameters": {
+     "REPO": "mvp-builder-app/default-repo",
+     "PHASES": "1",
+     "EPICS": "1",
+     "ISSUES": "3"
+    },
+    "PlatformCapabilities": [
+     "FARGATE"
+    ],
+    "Tags": {
+     "env": "dev",
+     "project": "mvp-backlog"
+    },
+    "Type": "container"
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/MVPJobDef"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/81WTW/bMAz9LdVxUL1+DD3k5rpFkaFrsiToYUEwyDKTqJElQ6KceYb/+yDLTtIG6GEdhpwkkdTTI/kk+yq6uriJLs7Y1p7zbHMuRRrVU2R8QydgtTMc5uQToeQTWVC2tT9r4FdR/VzweU1y9iv+bcmgDVAMHxjCllW9xbpUASZaLcXKGYZCKzKY10SxHF6FzKrCG8YulYITSrjIzDdmN21QQ9/ZYUTJEI62LJoFTZbqeZzQADptd81rwkomJEuFFFj90KpHLQs+zLq5h7qVmm+6dc6KADIsRuqROcXXZIDGASWiKG+SN+HMWrFSw6K8ibPMgLUjlRjosu/yOQkWLZEse9r1jQx8qxcnQ/A0WAQpBQH52UQ7hBlLJezte1tsreaiBdgF+8n9cOyHfbFpp91/rswlk/YEav4xGqfD5ERoBBUOFYJRsNNQeOO6VYzI+DoHhXQK3BmB1YPRrpjXnmx/lJR6G0s5cphqp7L+cmRguRHF/sig+kOchkq9slH9qFc9ruymT/v32UCuSybHWgpekYEHRqOr1oOgwgGXXwJ+D9VQex3Vt45vwlVwqO9AAsIofQGOtmcpxRJ4xSVMnATrPybN4r0jSzBWaAVdmt2L93iI0oLQ/hMXaAUiNAwBdl6TtF0eVOfQ31DB8qieaAk+AWtdDtltRQY1KYxQXBRMxpxrp3DfdJeD3xDzg04ToyXs6tkxnuk+OZ/x3tgjH3lbKQyVFAp2vt3b/q7zLw77P1s+UNKcKbaCrIUUQTevbFVsetWHznoI2jXeI/dFm2nvOarlsTnLpsgQ/GW0rzL8oLll1ysuZcjXUZ0sVaLzwiHcq1IYrdonIFmqrzr97sBBN7+DpVDC16VpaOIs6vz4F88n3xnfxIyNLkUG5pZZoLG1gFNkK6FWDR1XuNbq83V0eRVdn71YIc6NUyhyiCZh/AMS56wFZwoAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "MVPBacklogBatchStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

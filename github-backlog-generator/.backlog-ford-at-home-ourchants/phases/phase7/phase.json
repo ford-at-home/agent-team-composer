@@ -1,0 +1,12 @@
+{
+  "number": 7,
+  "title": "\ud83d\ude80 Deployment - AWS Production Release",
+  "description": "Deploy PostgreSQL database to AWS, configure production environment variables, set up monitoring and alerts. Execute CDK deployment scripts, verify database connections, and validate sample data loading in production environment.",
+  "id": "deployment",
+  "dueDate": "2025-11-01T00:58:09.775705",
+  "suggestedRoles": [
+    "DevOps Engineer",
+    "Site Reliability Engineer",
+    "Database Administrator"
+  ]
+}

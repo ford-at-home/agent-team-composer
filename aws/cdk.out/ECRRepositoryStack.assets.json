@@ -1,0 +1,21 @@
+{
+  "version": "45.0.0",
+  "files": {
+    "4935823f57b50fa86f59038d62adfd484f3cf3c2fb81dbef6008681478cbc88d": {
+      "displayName": "ECRRepositoryStack Template",
+      "source": {
+        "path": "ECRRepositoryStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "984906149037-us-east-1-9235c3f9": {
+          "bucketName": "cdk-hnb659fds-assets-984906149037-us-east-1",
+          "objectKey": "4935823f57b50fa86f59038d62adfd484f3cf3c2fb81dbef6008681478cbc88d.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::984906149037:role/cdk-hnb659fds-file-publishing-role-984906149037-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}
